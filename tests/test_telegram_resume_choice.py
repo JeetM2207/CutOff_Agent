@@ -57,34 +57,43 @@ def _settings(tmp_path) -> SimpleNamespace:
     )
 
 
-def test_use_my_resume_runs_the_static_match_path(tmp_path, monkeypatch):
+def test_use_my_resume_bypasses_the_llm_entirely_and_runs_pure_category_match(tmp_path, monkeypatch):
+    """"Use my resume on file" must be fast, free, and deterministic —
+    never invoking generate_tailored_resume OR the static JD-content-match
+    tier (select_best_resume), which is a DIFFERENT, unrequested LLM call
+    the student never asked for. Only the plain resume_{category}.pdf
+    lookup runs."""
     db_path = str(tmp_path / "cutoff.db")
     db.init_db(db_path)
-    drive = _drive()
+    drive = _drive(role_category="SDE")
     resolve.save_drive(db_path, drive)
-    files = FakeFileStore([ResumeFile(file_id="f1", name="resume_SDE.pdf", web_view_link="https://drive/sde")])
+    files = FakeFileStore([
+        ResumeFile(file_id="f1", name="resume_SDE.pdf", web_view_link="https://drive/sde"),
+        ResumeFile(file_id="f2", name="resume_DEFAULT.pdf", web_view_link="https://drive/default"),
+    ])
     bot, adapters = _bot(db_path, files=files, settings=_settings(tmp_path))
     approval = _plan_choice_card(db_path, drive, adapters)
 
     monkeypatch.setattr("cutoff.pipeline.master_profile.load_master_profile", lambda path: None)
-    called_generate = []
+    called_generate, called_match = [], []
     monkeypatch.setattr("cutoff.llm.resume_generate.generate_tailored_resume",
                         lambda *a, **k: called_generate.append(1))
     monkeypatch.setattr(
         "cutoff.llm.resume_match.select_best_resume",
-        lambda jd_text, resumes, **k: ("resume_SDE.pdf", "Matches on backend experience."),
+        lambda jd_text, resumes, **k: called_match.append(1) or ("resume_SDE.pdf", "should never be reached"),
     )
-    monkeypatch.setattr("cutoff.pipeline.resume.extract_pdf_text", lambda data: "some resume text")
 
     bot._handle_resume_choice(approval, "use")
 
     assert not called_generate  # "use" must never even attempt generation
+    assert not called_match  # "use" must never even attempt the JD-content match either
     edit_calls = [c for c in adapters.messenger.calls if c[0] == "edit"]
     assert len(edit_calls) == 1
     assert "drive/sde" in edit_calls[0][1]["text"]
-    assert "Matches on backend experience." in edit_calls[0][1]["text"]
+    assert "Why this one" not in edit_calls[0][1]["text"]  # no LLM reason -- nothing to show
     saved = resolve.get_drive(db_path, drive.drive_id)
     assert saved.resolved_resume_pick["name"] == "resume_SDE.pdf"
+    assert saved.resolved_resume_pick["reason"] is None
 
 
 def test_generate_tailored_resume_runs_only_on_generate(tmp_path, monkeypatch):

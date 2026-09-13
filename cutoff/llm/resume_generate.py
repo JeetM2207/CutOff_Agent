@@ -6,8 +6,9 @@ master-profile entries, exactly like resume_match.py already constrains
 `chosen_filename` — so the model cannot select or invent something that
 isn't there, only choose which real things to emphasize and how to phrase
 them. This is a read, never ledgered, and purely optional: resume.py catches
-any failure here and falls back to static resume_*.pdf matching, so a bad or
-failed generation never blocks planning."""
+any failure here and falls back to a different resume-selection tier
+(exactly which one depends on resume_mode — see select_resume_smart's own
+docstring), so a bad or failed generation never blocks planning."""
 from __future__ import annotations
 
 import json
@@ -154,7 +155,8 @@ def generate_tailored_resume(
     *, api_key: str, model: str, provider: str, base_url: str | None, db_path: str, use_cache: bool = True,
 ) -> tuple[dict, str]:
     """Returns (sections, match_reason). Raises on any failure — caller
-    (resume.select_resume_smart) catches and falls back to static matching."""
+    (resume.select_resume_smart) catches and falls back to a different
+    resume-selection tier, exactly which one depending on resume_mode."""
     user_text = _user_text(jd_text, profile)
     phash = prompt_hash(provider, model, _SYSTEM, user_text)
 

@@ -360,6 +360,18 @@ found and fixed along the way — the model classified an email address as a "li
 re-verified), and a real public GitHub account's repos fetched and merged correctly. 49 new tests, all
 external boundaries stubbed. Full suite: 329/329 passing (280 prior + 49 new).
 
+### Tightening the 2-path fork
+
+Checking the built flow directly against the intended trigger design surfaced a real gap: "Use my resume
+on file" was routing through the pre-existing static JD-content-match tier (an LLM call), not a plain
+deterministic lookup — a leftover from before the explicit choice card existed, never reconsidered once it
+was added on top. Fixed so `resume_mode="match"` bypasses the LLM entirely (no JD-content match either),
+and `resume_mode="generate"` falls straight to the same deterministic default on any failure, never into
+that other tier — tapping "Generate" silently falling back to a *different*, unrequested LLM call would be
+exactly the wasted-tokens-at-the-wrong-time problem being guarded against. The JD-content-match tier is
+now reachable only via `resume_mode="auto"` (no master profile configured at all, choice card never
+shown), keeping every pre-existing caller's behavior unchanged. Full suite: 331/331 (2 new tests).
+
 ## Known limitations
 
 - `list_suspicious`'s reach is bounded by `SUSPICIOUS_QUERY_KEYWORDS` — a fixed phrase list. A

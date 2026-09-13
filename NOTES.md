@@ -1464,3 +1464,30 @@ external boundary (LLM, GitHub, LeetCode, Telegram's own file-download endpoint)
 network call in the suite. Full test suite: 329/329 passing (280 prior + 49 new, zero regressions), plus
 two separate live verifications against real external services (Gemini for parsing, GitHub for
 enrichment) fully isolated from any Gmail/Sheets/Calendar/Telegram account.
+
+## Tightening the 2-path fork: "Use my resume" must never touch the LLM at all
+
+User laid out the exact intended trigger points for the whole flow (setup phase vs. per-drive choice) and
+called for something specific: the two tapped paths should be clean, with "Use my resume on file" never
+spending an LLM call at all. Checking that against what was actually built found a real gap — tapping
+"Use" was routing through `select_resume_smart`'s pre-existing tier 2 (the static JD-content match, an LLM
+call that picks the best of several resumes on file), not straight to the plain deterministic category
+lookup. That tier predates the choice card entirely (from earlier in the session, before dynamic
+generation existed) and never got reconsidered once the explicit 2-path fork was added on top of it.
+
+Fixed by making `resume_mode` in `select_resume_smart` genuinely exclusive between the two tapped paths:
+`"match"` now short-circuits to `select_resume(role_category, files)` immediately — no LLM call
+whatsoever, not even the JD-content-match tier. `"generate"` still attempts generation, but on ANY
+failure now falls straight to the same deterministic category default too, never into the JD-content-match
+tier either — tapping "Generate" and having it silently fall back to a *different*, unrequested LLM call
+on failure would be exactly the "wasting tokens at the wrong time" the user was pushing back on. The static
+JD-content-match tier is now reachable only via `resume_mode="auto"` — i.e. only when no master profile is
+configured at all, so the choice card was never shown in the first place, preserving the original
+pre-choice-card behavior unchanged for anyone who hasn't set one up.
+
+Two new tests lock this in directly at the `resume.py` level (`test_resume_mode_match_bypasses_the_llm_
+entirely_even_with_jd_text_and_resumes_present`, `test_resume_mode_generate_falls_back_to_category_never_
+the_jd_match_tier_on_failure`), and the existing `test_telegram_resume_choice.py` "use" test was rewritten
+to assert `select_best_resume` is never called (it previously stubbed and expected that call — the very
+test that would have caught this gap if it had asserted the absence of the call instead of just its
+result). Full suite: 331/331 passing (329 prior + 2 new).

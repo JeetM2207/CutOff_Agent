@@ -1,20 +1,33 @@
 """Resume selection by role category (Section 6.4), plus two optional layers
-on top, each falling back to the one below it the instant anything goes
-wrong — this is a read, never ledgered, and must never block planning:
+on top — this is a read, never ledgered, and must never block planning:
 
 1. Dynamic generation: if a master profile (`config/master_profile.yaml`, a
-   local, hand-edited file — Section 6.4 extension) is configured, the LLM
-   rewrites a job-description-tailored resume from it and a real PDF is
-   compiled on the fly (`resume_pdf.py`, a fixed template — see its own
-   docstring), served by this app's own dashboard server rather than
-   uploaded anywhere (no Drive *write* scope needed). The student chooses
-   this path explicitly, per drive, over a Telegram button — see
-   `resume_mode` below and `planner._plan_resume_choice`.
-2. Static JD-content match: the original behavior — download every resume
-   on file, extract its text, have the LLM pick the best content match.
+   local file — Section 6.4 extension, built via the onboarding flow in
+   cutoff.llm.profile_extract / cutoff.pipeline.profile_synthesize, or
+   hand-edited) is configured, the LLM rewrites a job-description-tailored
+   resume from it and a real PDF is compiled on the fly (`resume_pdf.py`, a
+   fixed template — see its own docstring), served by this app's own
+   dashboard server rather than uploaded anywhere (no Drive *write* scope
+   needed).
+2. Static JD-content match: the pre-existing behavior from before the
+   runtime choice existed — download every resume on file, extract its
+   text, have the LLM pick the best content match.
 3. Deterministic category mapping (`select_resume`): the final fallback,
    used whenever neither of the above is configured, produces nothing
-   usable, or fails outright."""
+   usable, or fails outright.
+
+When a master profile IS configured, the student is never left to a
+silent automatic choice: they explicitly pick a path per drive, over a
+Telegram button (`planner._plan_resume_choice`), and `resume_mode` below
+keeps those two paths deliberately clean of each other's LLM calls —
+"match" (Use my resume on file) never touches the LLM at all, not even
+tier 2; "generate" falls straight to tier 3 on any failure, never into
+tier 2 either, since that would be a second, unrequested LLM call at the
+exact moment the student explicitly chose a path. Tier 2 (the static
+JD-content match) is reachable ONLY via `resume_mode="auto"` — i.e. only
+when no master profile is configured at all, so the choice card was never
+shown in the first place; this keeps every caller from before this
+feature existed working exactly as it always did."""
 from __future__ import annotations
 
 import hashlib
@@ -64,9 +77,10 @@ def _try_generate_tailored_resume(
     *, api_key: str, model: str, provider: str, base_url: str | None, db_path: str,
     output_dir: str, public_base_url: str,
 ) -> tuple[ResumeFile, str] | None:
-    """Returns None on ANY failure (LLM call, PDF render, disk write) —
-    caller falls back to static JD matching, exactly like a failed
-    select_best_resume call already does."""
+    """Returns None on ANY failure (LLM call, PDF render, disk write) — the
+    caller decides what happens next based on resume_mode: "generate" goes
+    straight to the deterministic category default, "auto" falls through
+    to the static JD-content-match tier first (see select_resume_smart)."""
     from cutoff.llm.resume_generate import generate_tailored_resume
     from cutoff.pipeline.resume_pdf import render_resume_pdf
 
@@ -102,21 +116,41 @@ def select_resume_smart(
     category fallback was used instead of an actual JD-content match or a
     dynamically generated one.
 
-    Dynamic generation (see module docstring) only ever activates when the
-    caller explicitly supplies student_profile, master_profile, AND
-    generated_resume_dir — every existing caller that doesn't pass these
-    (including every test written before this feature existed) gets the
-    exact prior behavior, unchanged. `resume_mode="match"` skips generation
-    even when configured (the student explicitly chose "use my resume on
-    file" — Section 6.4's runtime choice); `resume_mode="generate"` still
-    falls back to static matching if generation itself fails, same
-    never-block-planning guarantee as everything else here."""
+    `resume_mode` — the two explicit runtime-choice paths (Section 6.4) are
+    kept deliberately clean, never crossing into each other's LLM calls:
+
+      "auto"     — no explicit student choice involved (no master profile
+                   configured at all, so the choice card was never shown).
+                   Original pre-choice-card behavior, unchanged: dynamic
+                   generation if configured, else the static JD-content
+                   match (an LLM picks the best of several resumes on
+                   file), else category default.
+      "match"    — the student tapped "Use my resume on file". Bypasses
+                   the LLM ENTIRELY — including the JD-content-match tier
+                   below — and goes straight to the deterministic category
+                   lookup. Fast, free, and exactly what the student asked
+                   for: no AI involved in this path at all.
+      "generate" — the student tapped "Generate tailored resume". Attempts
+                   generation; on ANY failure, falls straight to the
+                   deterministic category default — never the JD-content-
+                   match tier, which is a second, unrequested LLM call the
+                   student never asked for and would silently spend tokens
+                   on at exactly the moment they explicitly chose a path.
+
+    Dynamic generation only ever activates when the caller explicitly
+    supplies student_profile, master_profile, AND generated_resume_dir —
+    every existing caller that doesn't pass these (including every test
+    written before this feature existed) gets the exact prior "auto"
+    behavior, unchanged."""
+    if resume_mode == "match":
+        return select_resume(role_category, files), None
+
     resumes = files.list_resumes()
     if not jd_text.strip():
         return select_resume(role_category, files), None
 
     generation_configured = student_profile is not None and master_profile is not None and generated_resume_dir
-    if resume_mode != "match" and generation_configured:
+    if generation_configured:
         generated = _try_generate_tailored_resume(
             jd_text, master_profile, student_profile,
             api_key=api_key, model=model, provider=provider, base_url=base_url, db_path=db_path,
@@ -124,6 +158,13 @@ def select_resume_smart(
         )
         if generated is not None:
             return generated
+
+    if resume_mode == "generate":
+        # An explicit "generate" request failed outright (or generation
+        # wasn't even configured, which shouldn't normally happen given
+        # the caller's own guards) -- never fall into the JD-content-match
+        # tier below; that's a different, unrequested LLM call.
+        return select_resume(role_category, files), None
 
     if not resumes:
         return select_resume(role_category, files), None

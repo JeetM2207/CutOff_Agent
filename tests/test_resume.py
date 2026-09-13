@@ -228,6 +228,63 @@ def test_select_resume_smart_generation_stays_inert_without_master_profile(monke
     assert picked.name == "resume_SDE.pdf"  # category fallback (no JD-matching stub set up here)
 
 
+# --- The two explicit runtime-choice paths (Section 6.4): kept deliberately
+# clean of each other's LLM calls. "match" never touches the LLM at all;
+# "generate" falls straight to category on failure, never into the
+# JD-content-match tier -- that's a second, unrequested LLM call.
+
+def test_resume_mode_match_bypasses_the_llm_entirely_even_with_jd_text_and_resumes_present(monkeypatch):
+    """"Use my resume on file" must be pure category lookup -- no
+    generate_tailored_resume call, no select_best_resume call -- even
+    when a master profile, JD text, and matchable resumes are ALL present
+    and would otherwise trigger one of those paths."""
+    store = FakeFileStore(_resumes(), contents={"f_sde": b"x", "f_data": b"x", "f_default": b"x"})
+    called_generate, called_match = [], []
+    monkeypatch.setattr("cutoff.llm.resume_generate.generate_tailored_resume",
+                        lambda *a, **k: called_generate.append(1))
+    monkeypatch.setattr("cutoff.llm.resume_match.select_best_resume",
+                        lambda *a, **k: called_match.append(1) or ("resume_SDE.pdf", "unused"))
+
+    picked, reason = resume.select_resume_smart(
+        "SDE", "We need a backend engineer with Django experience.", store,
+        api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
+        student_profile=STUDENT, master_profile=MASTER_PROFILE, generated_resume_dir="/tmp/unused",
+        resume_mode="match",
+    )
+
+    assert not called_generate
+    assert not called_match
+    assert picked.name == "resume_SDE.pdf"  # plain category match
+    assert reason is None
+
+
+def test_resume_mode_generate_falls_back_to_category_never_the_jd_match_tier_on_failure(monkeypatch, tmp_path):
+    """An explicit "generate" request that fails must never fall into the
+    JD-content-match tier -- that's a separate, unrequested LLM call the
+    student never asked for at the exact moment they explicitly chose a
+    path (wastes tokens for no reason they asked for)."""
+    store = FakeFileStore(_resumes(), contents={"f_sde": b"x", "f_data": b"x", "f_default": b"x"})
+    monkeypatch.setattr(resume, "extract_pdf_text", lambda data: "some resume text")
+
+    def broken_generate(*a, **k):
+        raise RuntimeError("rate limited")
+    called_match = []
+    monkeypatch.setattr("cutoff.llm.resume_generate.generate_tailored_resume", broken_generate)
+    monkeypatch.setattr("cutoff.llm.resume_match.select_best_resume",
+                        lambda *a, **k: called_match.append(1) or ("resume_SDE.pdf", "should never be reached"))
+
+    picked, reason = resume.select_resume_smart(
+        "SDE", "We need a backend engineer.", store,
+        api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
+        student_profile=STUDENT, master_profile=MASTER_PROFILE, generated_resume_dir=str(tmp_path),
+        resume_mode="generate",
+    )
+
+    assert not called_match
+    assert picked.name == "resume_SDE.pdf"  # deterministic category fallback
+    assert reason is None
+
+
 def test_write_generated_pdf_is_content_addressed(tmp_path):
     filename_a = resume._write_generated_pdf(b"same bytes", output_dir=str(tmp_path))
     filename_b = resume._write_generated_pdf(b"same bytes", output_dir=str(tmp_path))
