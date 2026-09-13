@@ -1640,3 +1640,35 @@ distinct URLs — the exact case that was broken before.
 7 new tests (`test_ingest_hyperlinks.py`, `test_profile_extract.py` extended) plus 2 existing
 `test_telegram_onboard.py` tests fixed to mock the new `extract_pdf_hyperlinks` call. Full suite: 367/367
 passing (360 prior + 7 new).
+
+## A live Sheet typo crashed the worker loop with a bare `KeyError`, plus a backlog of already-built polish
+
+Investigated a real crash the user hit: `python -m cutoff.main` died on every poll with just `KeyError:
+'name'`, no hint where to look. Root cause, confirmed by reading the user's actual Google Sheet directly
+via the project's own credentials: the Profile tab's row for the student's name had a typo in column A —
+`.` instead of `name` — so `_read_kv("Profile")` built a dict that simply never had a `"name"` key, and
+`kv["name"]` blew up with nothing actionable in the traceback. Fixed the cell directly (confirmed with the
+user it was their own hand-edit, not agent-authored data) and added `SheetsSource._require(kv, key, tab)`,
+now used for every required Profile/Policy field, which raises a `ValueError` naming the exact tab and
+field to check instead of a bare `KeyError`. 4 new regression tests in `test_sheets_real.py`, including one
+that reproduces the exact `.`-instead-of-`name` typo. Full suite: 374/374.
+
+While fixing that, `git status` turned up a large set of already-modified files from earlier in this same
+session that hadn't been committed yet: master-profile-driven form autofill (phone/skills/links pulled
+from the onboarded `MasterProfile` when the form asks for them, and `MasterProfile` text used as a resume-
+text fallback when there's no attachment to extract from), `generated:<file>` resume picks resolved to the
+local `generated_resumes/` file instead of attempting a Drive fetch that would always fail for a
+generated-not-uploaded resume, `process_message` re-queuing a message for the next poll instead of
+dropping it forever if an unhandled exception escapes mid-run, and trace spans now recording the actual
+exception text so a failed run's timeline reads as more than "status: error". Reviewed each diff (not just
+diffed but read in full) before committing, since unexplained working-tree changes are exactly the case
+where you check before staging anything — all of it was coherent, already-tested, and consistent with
+work described earlier in this session, so it went in as its own commit rather than being discarded.
+
+Also bundled in that commit: demo-day dashboard polish (a "Connected Ecosystem" status bar and per-platform
+cards on the drive detail view, plus a rendered Interview Prep Intel block) and two demo helper scripts
+(`demo_fetch_mail.py`, `demo_reset.py`). One thing fixed before committing: the prep-intel block was being
+assembled with template-string `innerHTML`, including `strategy_summary` and reference-link URLs that are
+LLM-synthesized from live web search results — untrusted text by construction, since a search result's
+title or snippet could contain markup. Rewrote it to build the DOM with `createElement`/`textContent`
+instead, so that content can never be interpreted as HTML.

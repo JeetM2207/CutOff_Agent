@@ -445,6 +445,26 @@ never knew to populate it). Verified live against a PDF built to match the user'
 both header contact links and both projects' separate GitHub/Live-Demo links came back correct. 7 new
 tests, 2 existing tests fixed for the new call. Full suite: 367/367.
 
+## Fix: bare `KeyError` on a malformed Sheet tab, plus a reviewed backlog of already-built work
+
+A live crash: `SheetsSource.read_profile()` died with a bare `KeyError: 'name'` because the student's
+Profile tab had a hand-edit typo — column A read `.` instead of `name` — so the parsed key-value dict
+never had a `name` key at all. Fixed the cell directly (confirmed it was the student's own edit) and added
+`_require(kv, key, tab)`, now used for every required Profile/Policy field, raising a `ValueError` that
+names the exact tab and field to check rather than an unexplained `KeyError`. 4 new regression tests,
+including one reproducing the exact typo. Full suite: 374/374.
+
+Separately, a batch of already-built, already-tested changes from earlier in the same session were still
+uncommitted when this was found — each was diffed and read in full before committing, per the rule that
+unexplained working-tree state gets investigated, not blindly staged: form autofill now falls back to the
+onboarded `MasterProfile` for phone/skills/links and resume text, `generated:<file>` resume picks resolve
+to the local file instead of a Drive fetch that would always fail, a message that crashes mid-pipeline is
+re-queued for the next poll instead of dropped forever, and trace spans record the actual exception text.
+One issue was found and fixed before committing: the new demo-day "Interview Prep Intel" dashboard block
+assembled its DOM via template-string `innerHTML`, including `strategy_summary` and reference-link URLs
+that are LLM-synthesized from live web search results — untrusted text that could contain markup. Rewritten
+with `createElement`/`textContent` so that content is never interpreted as HTML.
+
 ## Known limitations
 
 - `list_suspicious`'s reach is bounded by `SUSPICIOUS_QUERY_KEYWORDS` — a fixed phrase list. A
