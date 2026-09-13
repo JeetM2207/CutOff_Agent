@@ -33,15 +33,28 @@ class SheetsSource:
         resp = self._execute(self._values().get(spreadsheetId=self._sheet_id, range=f"{tab}!A:B"))
         return {row[0]: row[1] for row in resp.get("values", []) if len(row) >= 2}
 
+    def _require(self, kv: dict, key: str, tab: str) -> str:
+        """A bare `kv[key]` KeyError gives no hint of WHERE to look when a
+        student hand-edits the Sheet — found live: a single mistyped cell
+        (column A read "." instead of "name") crashed the whole worker loop
+        every poll with nothing but `KeyError: 'name'` to go on."""
+        if key not in kv:
+            raise ValueError(
+                f"{tab!r} tab is missing required field {key!r} — check that some row's column A "
+                f"literally reads {key!r} (no typos/extra characters) and column B has a value."
+            )
+        return kv[key]
+
     def read_profile(self) -> StudentProfile:
         kv = self._read_kv("Profile")
         return StudentProfile(
-            name=kv["name"], roll_no=kv["roll_no"], email=kv["email"], branch=kv["branch"],
-            gpa=float(kv["gpa"]), gpa_scale=float(kv.get("gpa_scale", 10.0)),
-            active_backlogs=int(kv["active_backlogs"]),
+            name=self._require(kv, "name", "Profile"), roll_no=self._require(kv, "roll_no", "Profile"),
+            email=self._require(kv, "email", "Profile"), branch=self._require(kv, "branch", "Profile"),
+            gpa=float(self._require(kv, "gpa", "Profile")), gpa_scale=float(kv.get("gpa_scale", 10.0)),
+            active_backlogs=int(self._require(kv, "active_backlogs", "Profile")),
             pct_10th=float(kv["pct_10th"]) if kv.get("pct_10th") else None,
             pct_12th=float(kv["pct_12th"]) if kv.get("pct_12th") else None,
-            batch_year=int(kv["batch_year"]),
+            batch_year=int(self._require(kv, "batch_year", "Profile")),
             placed_status=kv.get("placed_status", "UNPLACED"),
             current_offer_lpa=float(kv["current_offer_lpa"]) if kv.get("current_offer_lpa") else None,
             timezone=kv.get("timezone", "Asia/Kolkata"),
@@ -51,7 +64,7 @@ class SheetsSource:
         kv = self._read_kv("Policy")
         return CollegePolicy(
             career_office_senders=[s.strip() for s in kv.get("career_office_senders", "").split(",") if s.strip()],
-            college_domain=kv["college_domain"],
+            college_domain=self._require(kv, "college_domain", "Policy"),
             one_offer_rule=kv.get("one_offer_rule", "").strip().lower() in ("true", "1", "yes"),
             dream_multiplier=float(kv.get("dream_multiplier", 1.0)),
             no_show_penalty_text=kv.get("no_show_penalty_text", ""),

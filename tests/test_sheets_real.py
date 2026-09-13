@@ -37,11 +37,14 @@ class _FakeValues:
         self.rows: dict[str, list[str]] = {}  # drive_id -> row values
         self._order: list[str] = []
         self.form_templates: list[list[str]] = []  # [[form_url, template_url], ...]
+        self.kv_tabs: dict[str, list[list[str]]] = {}  # "Profile!A:B" / "Policy!A:B" -> [[key, value], ...]
         self.get_error: Exception | None = None
 
     def get(self, spreadsheetId, range):
         if self.get_error is not None:
             return _FakeExecute(error=self.get_error)
+        if range in self.kv_tabs:
+            return _FakeExecute({"values": self.kv_tabs[range]})
         if range == "Drives!A:A":
             return _FakeExecute({"values": [[did] for did in self._order]})
         if range == "FormTemplates!A:B":
@@ -147,3 +150,61 @@ def test_read_drive_row_translates_http_error_to_adapter_error():
     with pytest.raises(AdapterError) as exc_info:
         src.read_drive_row("drive1")
     assert exc_info.value.status_code == 500
+
+
+# --- read_profile / read_policy ---------------------------------------------
+# Regression coverage for a live bug: a hand-edited Profile tab with a single
+# mistyped cell (column A read "." instead of "name") crashed the whole
+# worker loop every poll with a bare, unhelpful `KeyError: 'name'`.
+
+def test_read_profile_parses_a_well_formed_tab():
+    service = _FakeService()
+    service.values.kv_tabs["Profile!A:B"] = [
+        ["name", "Riya Mehta"], ["roll_no", "21BCS045"], ["email", "riya@college.edu"],
+        ["branch", "CSE"], ["gpa", "7.42"], ["active_backlogs", "0"], ["batch_year", "2026"],
+    ]
+    src = SheetsSource(service, "sheet1")
+
+    profile = src.read_profile()
+
+    assert profile.name == "Riya Mehta"
+    assert profile.roll_no == "21BCS045"
+    assert profile.gpa == 7.42
+
+
+def test_read_profile_raises_an_actionable_error_when_a_required_field_is_missing():
+    """Reproduces the exact live failure: a typo in column A ("." instead of
+    "name") means the "name" key never appears in the parsed key-value dict
+    at all."""
+    service = _FakeService()
+    service.values.kv_tabs["Profile!A:B"] = [
+        [".", "Aniket Aslaliya"], ["roll_no", "23ucc523"], ["email", "23ucc523@lnmiit.ac.in"],
+        ["branch", "CSE"], ["gpa", "7.42"], ["active_backlogs", "0"], ["batch_year", "2026"],
+    ]
+    src = SheetsSource(service, "sheet1")
+
+    with pytest.raises(ValueError) as exc_info:
+        src.read_profile()
+    assert "name" in str(exc_info.value)
+    assert "Profile" in str(exc_info.value)
+
+
+def test_read_policy_parses_a_well_formed_tab():
+    service = _FakeService()
+    service.values.kv_tabs["Policy!A:B"] = [["college_domain", "college.edu"]]
+    src = SheetsSource(service, "sheet1")
+
+    policy = src.read_policy()
+
+    assert policy.college_domain == "college.edu"
+
+
+def test_read_policy_raises_an_actionable_error_when_college_domain_is_missing():
+    service = _FakeService()
+    service.values.kv_tabs["Policy!A:B"] = [["one_offer_rule", "true"]]
+    src = SheetsSource(service, "sheet1")
+
+    with pytest.raises(ValueError) as exc_info:
+        src.read_policy()
+    assert "college_domain" in str(exc_info.value)
+    assert "Policy" in str(exc_info.value)
