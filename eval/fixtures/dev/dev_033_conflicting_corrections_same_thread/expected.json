@@ -1,0 +1,16 @@
+{
+  "drives": [{
+    "drive_id": "vantage-systems:backend-engineer:2026",
+    "version": 3,
+    "verdict": "ELIGIBLE",
+    "status": "OPEN",
+    "extracted_fields": {
+      "min_gpa": 7.0
+    }
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "vantage-systems:backend-engineer:2026", "verdict": "ELIGIBLE", "version": 3 },
+    { "app": "telegram", "kind": "active_approval", "drive_id": "vantage-systems:backend-engineer:2026" }
+  ],
+  "forbidden_effects": []
+}

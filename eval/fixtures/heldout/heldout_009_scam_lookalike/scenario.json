@@ -1,0 +1,15 @@
+{
+  "id": "heldout_009_scam_lookalike",
+  "category": "scam_lookalike_domain",
+  "profile": "riya.json",
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <notices@coliege.edu>",
+      "received_at": "2026-09-05T10:00:00+05:30",
+      "subject": "Placement Drive: Everline Robotics - Controls Engineer",
+      "body": "Dear Students,\n\nEverline Robotics - Controls Engineer (CTC 10 LPA).\nEligibility: CSE, EEE, ECE | CGPA 7.0 and above | No active backlogs.\nApply: https://forms.gle/everlineCE by 11:59 PM, 27 September 2026.\n\nCareer Office"
+    }
+  ]
+}

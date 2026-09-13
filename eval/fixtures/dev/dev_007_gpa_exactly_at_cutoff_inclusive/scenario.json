@@ -1,0 +1,15 @@
+{
+  "id": "dev_007_gpa_exactly_at_cutoff_inclusive",
+  "category": "gpa_exactly_at_cutoff_inclusive",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Cobalt Freight - Operations Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nCobalt Freight is hiring Operations Analysts (CTC 8.5 LPA).\nEligibility: CSE, IT | CGPA 7.42 and above | No active backlogs.\nRegister here: https://forms.gle/cobaltOps by 11:59 PM, 22 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

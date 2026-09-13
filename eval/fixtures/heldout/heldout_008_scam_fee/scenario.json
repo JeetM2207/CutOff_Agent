@@ -1,0 +1,15 @@
+{
+  "id": "heldout_008_scam_fee",
+  "category": "scam_registration_fee",
+  "profile": "riya.json",
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Placement Cell Assist <placementcell.notify99@gmail.com>",
+      "received_at": "2026-09-05T22:00:00+05:30",
+      "subject": "URGENT: Confirm your placement test seat within 1 hour",
+      "body": "Dear Student,\n\nYou have been shortlisted for a guaranteed placement offer with our partner company. Seats are limited!\nTo confirm your seat, transfer a refundable deposit of Rs 1500 via UPI to placementdesk@quickpay.example within 1 hour, or your slot will be given away.\nThis is a golden opportunity, act fast.\n\nPlacement Cell Assist Team"
+    }
+  ]
+}

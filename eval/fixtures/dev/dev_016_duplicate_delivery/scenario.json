@@ -1,0 +1,22 @@
+{
+  "id": "dev_016_duplicate_delivery",
+  "category": "duplicate_delivery",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Cinder Robotics - Robotics Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nCinder Robotics is hiring Robotics Engineers (CTC 13 LPA).\nEligibility: CSE, ME, ECE | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/cinderRE by 11:59 PM, 26 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Cinder Robotics - Robotics Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nCinder Robotics is hiring Robotics Engineers (CTC 13 LPA).\nEligibility: CSE, ME, ECE | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/cinderRE by 11:59 PM, 26 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

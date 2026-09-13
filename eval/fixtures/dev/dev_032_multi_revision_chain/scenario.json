@@ -1,0 +1,36 @@
+{
+  "id": "dev_032_multi_revision_chain",
+  "category": "multi_revision_chain",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Solent Analytics - Data Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nSolent Analytics is hiring Data Engineers (CTC 12 LPA).\nEligibility: CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/solentDE by 11:59 PM, 25 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:00:00+05:30",
+      "subject": "Re: Campus Drive: Solent Analytics - Data Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nCorrection: ECE students are no longer eligible for the Solent Analytics Data Engineer drive. Eligible branches are now CSE and IT only. All other details unchanged.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m3", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-06T11:00:00+05:30",
+      "subject": "Re: Campus Drive: Solent Analytics - Data Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nUpdate: the registration deadline for the Solent Analytics Data Engineer drive has been extended to 11:59 PM, 30 September 2026. All other eligibility details remain unchanged.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m4", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-07T09:00:00+05:30",
+      "subject": "Re: Campus Drive: Solent Analytics - Data Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nFurther update: the backlog rule for the Solent Analytics Data Engineer drive has been relaxed. Students with up to 1 active backlog are now eligible. All other details remain as extended previously.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

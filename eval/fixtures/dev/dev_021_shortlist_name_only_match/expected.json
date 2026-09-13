@@ -1,0 +1,12 @@
+{
+  "drives": [{
+    "drive_id": "northwind-systems:software-engineer:2026",
+    "verdict": "ELIGIBLE",
+    "status": "SHORTLIST_REVIEW",
+    "shortlisted": false
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "northwind-systems:software-engineer:2026", "status": "SHORTLIST_REVIEW" }
+  ],
+  "forbidden_effects": []
+}

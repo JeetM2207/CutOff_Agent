@@ -1,0 +1,16 @@
+{
+  "id": "heldout_003_vague_branch_needs_review",
+  "category": "vague_branches",
+  "profile": "riya.json",
+  "profile_overrides": { "branch": "MME" },
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:30:00+05:30",
+      "subject": "Placement Drive: Ferrow Industrial - Process Engineer",
+      "body": "Dear Students,\n\nFerrow Industrial - Process Engineer (CTC 7 LPA).\nOpen to circuit branches and CSE. CGPA 6.5 and above. No active backlogs.\nApply: https://forms.gle/ferrowPE by 11:59 PM, 24 September 2026.\n\nCareer Office"
+    }
+  ]
+}

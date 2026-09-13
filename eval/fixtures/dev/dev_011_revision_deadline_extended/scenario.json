@@ -1,0 +1,22 @@
+{
+  "id": "dev_011_revision_deadline_extended",
+  "category": "revision_deadline_extended",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Fernbank Foods - Supply Chain Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nFernbank Foods is hiring Supply Chain Analysts (CTC 8 LPA).\nEligibility: CSE, IT, ME | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/fernbankSCA by 11:59 PM, 12 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T18:00:00+05:30",
+      "subject": "Re: Campus Drive: Fernbank Foods - Supply Chain Analyst (2026 Batch)",
+      "body": "Update: due to popular demand, the registration deadline for the Fernbank Foods drive has been extended to 11:59 PM, 15 September 2026. All other eligibility criteria remain unchanged."
+    }
+  ]
+}

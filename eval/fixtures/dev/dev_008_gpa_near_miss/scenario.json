@@ -1,0 +1,16 @@
+{
+  "id": "dev_008_gpa_near_miss",
+  "category": "gpa_near_miss",
+  "profile": "riya.json",
+  "profile_overrides": { "gpa": 6.98 },
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Lumen Dynamics - Analytics Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nLumen Dynamics is hiring Analytics Engineers (CTC 11 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/lumenAE by 11:59 PM, 23 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

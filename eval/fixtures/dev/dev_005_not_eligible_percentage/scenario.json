@@ -1,0 +1,15 @@
+{
+  "id": "dev_005_not_eligible_percentage",
+  "category": "not_eligible_percentage",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Vantage Retail - Business Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nVantage Retail is hiring Business Analysts (CTC 9 LPA).\nEligibility: CSE, IT | CGPA 6.5 and above | Minimum 85% in 10th | Minimum 90% in 12th.\nRegister here: https://forms.gle/vantageBA by 11:59 PM, 21 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

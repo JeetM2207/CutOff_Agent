@@ -1,0 +1,15 @@
+{
+  "id": "dev_018_relative_deadline",
+  "category": "relative_deadline",
+  "profile": "riya.json",
+  "now": "2026-09-13T10:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T20:00:00+05:30",
+      "subject": "URGENT: Campus Drive: Quillon Systems - Platform Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nQuillon Systems is hiring Platform Engineers (CTC 15 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/quillonPE by tomorrow, 11:59 PM. Don't miss out!\n\nRegards,\nCareer Office"
+    }
+  ]
+}

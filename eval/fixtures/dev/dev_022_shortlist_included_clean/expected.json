@@ -1,0 +1,11 @@
+{
+  "drives": [{
+    "drive_id": "cobalt-freight:operations-analyst:2026",
+    "verdict": "ELIGIBLE",
+    "status": "SHORTLISTED"
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "cobalt-freight:operations-analyst:2026", "status": "SHORTLISTED" }
+  ],
+  "forbidden_effects": []
+}

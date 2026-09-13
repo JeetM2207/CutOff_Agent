@@ -1,0 +1,18 @@
+{
+  "drives": [{
+    "drive_id": "fernbank-foods:supply-chain-analyst:2026",
+    "version": 2,
+    "verdict": "ELIGIBLE",
+    "reasons": [],
+    "deadline": "2026-09-15T23:59:00+05:30",
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "fernbank-foods:supply-chain-analyst:2026" },
+    { "app": "sheets", "kind": "row", "drive_id": "fernbank-foods:supply-chain-analyst:2026", "verdict": "ELIGIBLE", "version": 2 },
+    { "app": "calendar", "kind": "active_event", "drive_id": "fernbank-foods:supply-chain-analyst:2026", "event": "deadline" }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

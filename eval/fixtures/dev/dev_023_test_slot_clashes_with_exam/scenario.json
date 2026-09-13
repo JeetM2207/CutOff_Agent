@@ -1,0 +1,25 @@
+{
+  "id": "dev_023_test_slot_clashes_with_exam",
+  "category": "test_slot_clashes_with_exam",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "exam_events": [
+    { "title": "DBMS Midterm", "start": "2026-09-18T09:00:00+05:30", "end": "2026-09-18T11:00:00+05:30" }
+  ],
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Solberg Systems - QA Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nSolberg Systems is hiring QA Engineers (CTC 8 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/solbergQA by 11:59 PM, 15 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T10:00:00+05:30",
+      "subject": "Re: Campus Drive: Solberg Systems - QA Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nYour online test for the Solberg Systems QA Engineer drive is scheduled for 10:00 AM to 12:00 PM, 18 September 2026. Link: https://meet.example.com/solberg-test\n\nRegards,\nCareer Office"
+    }
+  ]
+}

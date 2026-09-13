@@ -1,0 +1,22 @@
+{
+  "id": "dev_012_revision_newly_eligible",
+  "category": "revision_newly_eligible",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Tidewater Logistics - Junior Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nTidewater Logistics is hiring Junior Analysts (CTC 7.5 LPA).\nEligibility: CSE, IT | CGPA 8.0 and above | No active backlogs.\nRegister here: https://forms.gle/tidewaterJA by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T18:00:00+05:30",
+      "subject": "Re: Campus Drive: Tidewater Logistics - Junior Analyst (2026 Batch)",
+      "body": "Correction: the GPA cutoff for the Tidewater Logistics drive has been lowered to CGPA 7.0 and above. All other criteria unchanged."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "dev_027_scam_registration_fee",
+  "category": "scam_registration_fee",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "HR Team <urgent.hiring2026@gmail.com>",
+      "received_at": "2026-09-04T21:00:00+05:30",
+      "subject": "CONGRATULATIONS! You are shortlisted - pay registration fee to confirm seat",
+      "body": "Dear Candidate,\n\nCongratulations! Based on your profile you have been PRE-SELECTED for our Data Analyst program.\nTo confirm your seat, please pay a REFUNDABLE registration fee of Rs 999 via UPI to secure@fastpay-verify.example within 2 hours or you will lose this opportunity.\nSelection is guaranteed once payment is confirmed.\n\nRegards,\nHR Team"
+    }
+  ]
+}

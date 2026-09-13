@@ -1,0 +1,157 @@
+{
+  "label": "after-all-fixes",
+  "split": "heldout",
+  "chaos": "none",
+  "timestamp": "20260912T063646Z",
+  "summary": {
+    "total_scenarios": 10,
+    "passed": 10,
+    "verdict_accuracy": 1.0,
+    "dangerous_errors": 0,
+    "missed_opportunities": 0,
+    "deadline_accuracy": 1.0,
+    "field_accuracy": {
+      "halcyon-devices:embedded-engineer:2026:version": 1.0,
+      "halcyon-devices:embedded-engineer:2026:status": 1.0,
+      "halcyon-devices:embedded-engineer:2026:reasons": 1.0,
+      "gantry-systems:test-engineer:2026:version": 1.0,
+      "gantry-systems:test-engineer:2026:status": 1.0,
+      "gantry-systems:test-engineer:2026:reasons": 1.0,
+      "ferrow-industrial:process-engineer:2026:version": 1.0,
+      "ferrow-industrial:process-engineer:2026:status": 1.0,
+      "windham-freight:logistics-analyst:2026:version": 1.0,
+      "windham-freight:logistics-analyst:2026:status": 1.0,
+      "windham-freight:logistics-analyst:2026:reasons": 1.0,
+      "oakhollow-systems:backend-engineer:2026:version": 1.0,
+      "oakhollow-systems:backend-engineer:2026:status": 1.0,
+      "corvid-analytics:data-engineer:2026:version": 1.0,
+      "corvid-analytics:data-engineer:2026:status": 1.0,
+      "corrigan-materials:materials-engineer:2026:version": 1.0,
+      "corrigan-materials:materials-engineer:2026:status": 1.0
+    },
+    "duplicate_effects": 0,
+    "forbidden_effects": 0,
+    "required_effects": 1.0,
+    "false_shortlisted": 0,
+    "scam_recall": 1.0,
+    "scam_false_alarms": 0,
+    "grounding_catches": 0,
+    "chaos_recovery_by_profile": {
+      "none": 1.0
+    },
+    "errors": []
+  },
+  "top_failure_clusters": [],
+  "scenarios": [
+    {
+      "scenario_id": "heldout_001_eligible_clean",
+      "category": "clean_new_drive_eligible",
+      "passed": true,
+      "error": null,
+      "verdict_correct": true,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_002_not_eligible_multiple_reasons",
+      "category": "not_eligible_multiple_reasons",
+      "passed": true,
+      "error": null,
+      "verdict_correct": true,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_003_vague_branch_needs_review",
+      "category": "vague_branches",
+      "passed": true,
+      "error": null,
+      "verdict_correct": true,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_004_revision_becomes_ineligible",
+      "category": "revision_to_ineligible",
+      "passed": true,
+      "error": null,
+      "verdict_correct": true,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_005_cancellation",
+      "category": "cancellation",
+      "passed": true,
+      "error": null,
+      "verdict_correct": null,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_006_duplicate_delivery",
+      "category": "duplicate_delivery",
+      "passed": true,
+      "error": null,
+      "verdict_correct": true,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_007_deadline_passed",
+      "category": "deadline_already_passed",
+      "passed": true,
+      "error": null,
+      "verdict_correct": true,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_008_scam_fee",
+      "category": "scam_registration_fee",
+      "passed": true,
+      "error": null,
+      "verdict_correct": null,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_009_scam_lookalike",
+      "category": "scam_lookalike_domain",
+      "passed": true,
+      "error": null,
+      "verdict_correct": null,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    },
+    {
+      "scenario_id": "heldout_010_non_drive",
+      "category": "non_drive_resume_workshop",
+      "passed": true,
+      "error": null,
+      "verdict_correct": null,
+      "dangerous_error": false,
+      "missed_opportunity": false,
+      "forbidden_effects_hit": [],
+      "duplicate_effects": 0
+    }
+  ]
+}

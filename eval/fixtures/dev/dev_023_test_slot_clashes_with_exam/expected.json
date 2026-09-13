@@ -1,0 +1,17 @@
+{
+  "drives": [{
+    "drive_id": "solberg-systems:qa-engineer:2026",
+    "version": 2,
+    "verdict": "ELIGIBLE",
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "solberg-systems:qa-engineer:2026", "version": 2 },
+    { "app": "calendar", "kind": "active_event", "drive_id": "solberg-systems:qa-engineer:2026", "event": "event:TEST:0" },
+    { "app": "calendar", "kind": "event_description_contains", "drive_id": "solberg-systems:qa-engineer:2026", "event": "event:TEST:0", "text": "DBMS Midterm" },
+    { "app": "telegram", "kind": "message_sent_containing", "text": "DBMS Midterm" }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

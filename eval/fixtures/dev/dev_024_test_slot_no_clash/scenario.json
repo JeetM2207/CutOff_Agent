@@ -1,0 +1,22 @@
+{
+  "id": "dev_024_test_slot_no_clash",
+  "category": "test_slot_no_clash",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Wrenfield Insurance - Underwriting Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nWrenfield Insurance is hiring Underwriting Analysts (CTC 7.5 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/wrenfieldUA by 11:59 PM, 12 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T10:00:00+05:30",
+      "subject": "Re: Campus Drive: Wrenfield Insurance - Underwriting Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nYour online test for the Wrenfield Insurance Underwriting Analyst drive is scheduled for 10:00 AM to 12:00 PM, 18 September 2026. Link: https://meet.example.com/wrenfield-test\n\nRegards,\nCareer Office"
+    }
+  ]
+}

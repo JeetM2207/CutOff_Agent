@@ -1,0 +1,25 @@
+{
+  "id": "dev_020_shortlist_roll_different_format",
+  "category": "shortlist_roll_different_format",
+  "profile": "riya.json",
+  "now": "2026-09-16T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Zentrix Analytics - Data Analyst (2026 batch)",
+      "body": "Dear Students,\n\nZentrix Analytics is visiting campus for the Data Analyst role (CTC 9.5 LPA).\nEligibility: B.Tech CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/demoZentrix by 11:59 PM, 12 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-15T18:00:00+05:30",
+      "subject": "SHORTLIST: Zentrix Analytics - Online Test Round",
+      "body": "Dear Students,\n\nPlease find attached the shortlist of candidates for the Zentrix Analytics online test round. If your roll number appears on the list, you have been shortlisted.\n\nRegards,\nCareer Office",
+      "attachments": [
+        { "attachment_id": "att1", "filename": "shortlist.pdf", "mime_type": "application/pdf" }
+      ]
+    }
+  ]
+}

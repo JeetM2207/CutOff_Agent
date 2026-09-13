@@ -1,0 +1,29 @@
+{
+  "id": "dev_034_ambiguous_two_drive_resolution",
+  "category": "ambiguous_two_drive_resolution",
+  "profile": "riya.json",
+  "now": "2026-09-08T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Solstice Innovations - Software Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nSolstice Innovations is hiring Software Engineers (CTC 12 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/solsticeInnoSE by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t2",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T13:00:00+05:30",
+      "subject": "Campus Drive: Solstice Industries - Mechanical Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nSolstice Industries is hiring Mechanical Engineers (CTC 9 LPA).\nEligibility: ME, CE | CGPA 6.5 and above | No active backlogs.\nRegister here: https://forms.gle/solsticeIndME by 11:59 PM, 22 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m3", "thread_id": "t3",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T09:00:00+05:30",
+      "subject": "Update: Solstice test slot",
+      "body": "Dear Students,\n\nYour online test for the Solstice drive is scheduled for 10:00 AM to 12:00 PM, 18 September 2026. Link: https://meet.example.com/solstice-test\n\nRegards,\nCareer Office"
+    }
+  ]
+}

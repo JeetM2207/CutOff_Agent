@@ -1,0 +1,15 @@
+{
+  "id": "heldout_007_deadline_passed",
+  "category": "deadline_already_passed",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-11T08:00:00+05:30",
+      "subject": "FYI: Corrigan Materials campus drive (already closed)",
+      "body": "Dear Students,\n\nSharing details of a drive that concluded earlier this week for your records: Corrigan Materials - Materials Engineer (CTC 8 LPA).\nEligibility: CSE, ME, MME | CGPA 6.5 and above | No active backlogs.\nThe form closed at 11:59 PM, 5 September 2026.\n\nCareer Office"
+    }
+  ]
+}

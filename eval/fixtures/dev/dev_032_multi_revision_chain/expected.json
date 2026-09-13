@@ -1,0 +1,19 @@
+{
+  "drives": [{
+    "drive_id": "solent-analytics:data-engineer:2026",
+    "version": 4,
+    "verdict": "ELIGIBLE",
+    "status": "OPEN",
+    "extracted_fields": {
+      "branches_allowed": ["CSE", "IT"],
+      "max_active_backlogs": 1
+    }
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "solent-analytics:data-engineer:2026", "verdict": "ELIGIBLE", "version": 4, "deadline": "2026-09-30T23:59:00+05:30" },
+    { "app": "calendar", "kind": "active_event", "drive_id": "solent-analytics:data-engineer:2026" }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

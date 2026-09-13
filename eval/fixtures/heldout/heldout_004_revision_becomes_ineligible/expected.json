@@ -1,0 +1,19 @@
+{
+  "drives": [{
+    "drive_id": "windham-freight:logistics-analyst:2026",
+    "version": 2,
+    "verdict": "NOT_ELIGIBLE",
+    "reasons": ["GPA"],
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "telegram", "kind": "approval_voided", "drive_id": "windham-freight:logistics-analyst:2026" },
+    { "app": "sheets", "kind": "row", "drive_id": "windham-freight:logistics-analyst:2026", "verdict": "NOT_ELIGIBLE" },
+    { "app": "calendar", "kind": "cancelled_event", "drive_id": "windham-freight:logistics-analyst:2026", "event": "deadline" }
+  ],
+  "forbidden_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "windham-freight:logistics-analyst:2026" },
+    { "app": "calendar", "kind": "active_event", "drive_id": "windham-freight:logistics-analyst:2026", "event": "deadline" },
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

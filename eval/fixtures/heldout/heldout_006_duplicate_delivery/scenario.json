@@ -1,0 +1,22 @@
+{
+  "id": "heldout_006_duplicate_delivery",
+  "category": "duplicate_delivery",
+  "profile": "riya.json",
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:00:00+05:30",
+      "subject": "Placement Drive: Corvid Analytics - Data Engineer",
+      "body": "Dear Students,\n\nCorvid Analytics - Data Engineer (CTC 13 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nApply: https://forms.gle/corvidDE by 11:59 PM, 25 September 2026.\n\nCareer Office"
+    },
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:00:00+05:30",
+      "subject": "Placement Drive: Corvid Analytics - Data Engineer",
+      "body": "Dear Students,\n\nCorvid Analytics - Data Engineer (CTC 13 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nApply: https://forms.gle/corvidDE by 11:59 PM, 25 September 2026.\n\nCareer Office"
+    }
+  ]
+}

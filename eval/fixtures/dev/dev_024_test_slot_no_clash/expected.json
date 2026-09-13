@@ -1,0 +1,15 @@
+{
+  "drives": [{
+    "drive_id": "wrenfield-insurance:underwriting-analyst:2026",
+    "version": 2,
+    "verdict": "ELIGIBLE",
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "wrenfield-insurance:underwriting-analyst:2026", "version": 2 },
+    { "app": "calendar", "kind": "active_event", "drive_id": "wrenfield-insurance:underwriting-analyst:2026", "event": "event:TEST:0" }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

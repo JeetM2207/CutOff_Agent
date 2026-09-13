@@ -1,0 +1,16 @@
+{
+  "drives": [{
+    "drive_id": "meridian-health:data-analyst:2025",
+    "version": 1,
+    "verdict": "NOT_ELIGIBLE",
+    "reasons": ["BATCH"],
+    "status": "OPEN",
+    "extracted_fields": { "batch_years": [2025] }
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "meridian-health:data-analyst:2025", "verdict": "NOT_ELIGIBLE" }
+  ],
+  "forbidden_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "meridian-health:data-analyst:2025" }
+  ]
+}

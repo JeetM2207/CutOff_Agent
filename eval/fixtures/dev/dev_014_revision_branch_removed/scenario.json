@@ -1,0 +1,23 @@
+{
+  "id": "dev_014_revision_branch_removed",
+  "category": "revision_to_ineligible",
+  "profile": "riya.json",
+  "profile_overrides": { "branch": "ECE" },
+  "now": "2026-09-10T20:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T10:15:00+05:30",
+      "subject": "Campus Drive: Zentrix Analytics – Data Analyst (2026 batch)",
+      "body": "Dear Students,\n\nZentrix Analytics is visiting campus for the Data Analyst role (CTC 9.5 LPA).\nEligibility: B.Tech CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/demoZentrix by 11:59 PM, 12 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T18:40:00+05:30",
+      "subject": "Re: Campus Drive: Zentrix Analytics – Data Analyst (2026 batch)",
+      "body": "Correction: As per the company's update, ECE students are NOT eligible for this drive. Eligible branches: CSE and IT only. Deadline unchanged."
+    }
+  ]
+}

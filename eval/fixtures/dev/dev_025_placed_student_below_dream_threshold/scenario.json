@@ -1,0 +1,16 @@
+{
+  "id": "dev_025_placed_student_below_dream_threshold",
+  "category": "placed_student_below_dream_threshold",
+  "profile": "riya.json",
+  "profile_overrides": { "placed_status": "PLACED", "current_offer_lpa": 7.0 },
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Stonebridge Analytics - Junior Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nStonebridge Analytics is hiring Junior Analysts (CTC 9 LPA).\nEligibility: CSE, ME | CGPA 7.0 and above | No active backlogs. Open to placed and unplaced students, subject to your college's one-offer policy.\nRegister here: https://forms.gle/stonebridgeJA by 11:59 PM, 19 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

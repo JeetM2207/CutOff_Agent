@@ -1,0 +1,29 @@
+{
+  "id": "dev_033_conflicting_corrections_same_thread",
+  "category": "conflicting_corrections_same_thread",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Vantage Systems - Backend Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nVantage Systems is hiring Backend Engineers (CTC 13 LPA).\nEligibility: CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/vantageBE by 11:59 PM, 1 October 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:00:00+05:30",
+      "subject": "Re: Campus Drive: Vantage Systems - Backend Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nCorrection: the GPA cutoff for the Vantage Systems Backend Engineer drive has been raised to 8.0 CGPA and above. All other details unchanged.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m3", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T12:00:00+05:30",
+      "subject": "Re: Campus Drive: Vantage Systems - Backend Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nFurther correction: please disregard our previous email about the GPA cutoff. The cutoff for the Vantage Systems Backend Engineer drive remains 7.0 CGPA and above, as originally announced. We apologize for the confusion.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

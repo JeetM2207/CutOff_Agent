@@ -1,0 +1,17 @@
+{
+  "drives": [{
+    "drive_id": "oakhollow-systems:backend-engineer:2026",
+    "version": 2,
+    "status": "CANCELLED"
+  }],
+  "required_effects": [
+    { "app": "telegram", "kind": "approval_voided", "drive_id": "oakhollow-systems:backend-engineer:2026" },
+    { "app": "sheets", "kind": "row", "drive_id": "oakhollow-systems:backend-engineer:2026", "status": "CANCELLED" },
+    { "app": "calendar", "kind": "cancelled_event", "drive_id": "oakhollow-systems:backend-engineer:2026", "event": "deadline" }
+  ],
+  "forbidden_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "oakhollow-systems:backend-engineer:2026" },
+    { "app": "calendar", "kind": "active_event", "drive_id": "oakhollow-systems:backend-engineer:2026", "event": "deadline" },
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

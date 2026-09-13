@@ -1,0 +1,13 @@
+{
+  "drives": [{
+    "drive_id": "quillon-systems:platform-engineer:2026",
+    "version": 1,
+    "verdict": "ELIGIBLE",
+    "deadline": "2026-09-11T23:59:00+05:30",
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "quillon-systems:platform-engineer:2026", "verdict": "ELIGIBLE" }
+  ],
+  "forbidden_effects": []
+}

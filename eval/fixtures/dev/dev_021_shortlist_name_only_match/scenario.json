@@ -1,0 +1,25 @@
+{
+  "id": "dev_021_shortlist_name_only_match",
+  "category": "shortlist_name_only_match",
+  "profile": "riya.json",
+  "now": "2026-09-16T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Northwind Systems - Software Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nNorthwind Systems is visiting campus for the Software Engineer role (CTC 12 LPA).\nEligibility: B.Tech CSE, IT, ECE | CGPA 7.0 and above | No active backlogs | 2026 batch only.\nRegister here: https://forms.gle/northwindSDE by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-15T18:00:00+05:30",
+      "subject": "SHORTLIST: Northwind Systems - Technical Interview Round",
+      "body": "Dear Students,\n\nPlease find attached the shortlist of candidates for the Northwind Systems technical interview round. If your roll number appears on the list, you have been shortlisted.\n\nRegards,\nCareer Office",
+      "attachments": [
+        { "attachment_id": "att1", "filename": "shortlist.pdf", "mime_type": "application/pdf" }
+      ]
+    }
+  ]
+}

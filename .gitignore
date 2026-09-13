@@ -1,0 +1,17 @@
+.env
+credentials.json
+token.json
+sender_token.json
+cutoff.db
+cutoff.db-wal
+cutoff.db-shm
+traces.jsonl
+generated_resumes/
+config/master_profile.md
+*.log
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.claude/

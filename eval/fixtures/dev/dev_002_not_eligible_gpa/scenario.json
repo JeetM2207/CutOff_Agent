@@ -1,0 +1,15 @@
+{
+  "id": "dev_002_not_eligible_gpa",
+  "category": "not_eligible_gpa",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Kestrel Robotics - Firmware Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nKestrel Robotics is hiring Firmware Engineers (CTC 14 LPA).\nEligibility: CSE, ECE, EEE | CGPA 8.5 and above | No active backlogs.\nRegister here: https://forms.gle/kestrelFW by 11:59 PM, 18 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

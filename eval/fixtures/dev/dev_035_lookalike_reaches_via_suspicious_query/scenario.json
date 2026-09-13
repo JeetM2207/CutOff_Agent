@@ -1,0 +1,16 @@
+{
+  "id": "dev_035_lookalike_reaches_via_suspicious_query",
+  "category": "scam_lookalike_domain",
+  "profile": "riya.json",
+  "use_polling": true,
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <fake@соllеgе.еdu>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Vertex Analytics - Software Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nVertex Analytics is visiting campus for the Software Engineer role (CTC 10 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/vertexSE by 19 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

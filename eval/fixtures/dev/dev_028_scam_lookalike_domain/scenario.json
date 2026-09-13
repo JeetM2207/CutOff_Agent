@@ -1,0 +1,15 @@
+{
+  "id": "dev_028_scam_lookalike_domain",
+  "category": "scam_lookalike_domain",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo@co11ege.edu>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Marquee Systems - Software Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nMarquee Systems is visiting campus for the Software Engineer role (CTC 11 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/marqueeSE by 11:59 PM, 19 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

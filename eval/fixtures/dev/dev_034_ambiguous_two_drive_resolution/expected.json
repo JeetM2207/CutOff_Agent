@@ -1,0 +1,15 @@
+{
+  "drives": [
+    { "drive_id": "solstice-innovations:software-engineer:2026", "version": 1, "verdict": "ELIGIBLE", "status": "OPEN" },
+    { "drive_id": "solstice-industries:mechanical-engineer:2026", "version": 1, "verdict": "NOT_ELIGIBLE", "status": "OPEN" }
+  ],
+  "required_effects": [
+    { "app": "sheets", "kind": "row", "drive_id": "solstice-innovations:software-engineer:2026", "verdict": "ELIGIBLE" },
+    { "app": "sheets", "kind": "row", "drive_id": "solstice-industries:mechanical-engineer:2026", "verdict": "NOT_ELIGIBLE" },
+    { "app": "telegram", "kind": "message_sent_containing", "text": "Solstice Innovations" },
+    { "app": "telegram", "kind": "message_sent_containing", "text": "Solstice Industries" }
+  ],
+  "forbidden_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "solstice-industries:mechanical-engineer:2026" }
+  ]
+}

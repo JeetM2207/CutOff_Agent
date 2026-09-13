@@ -1,0 +1,22 @@
+{
+  "id": "dev_017_reminder_no_changes",
+  "category": "reminder_no_changes",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Marlow Biotech - Research Associate (2026 Batch)",
+      "body": "Dear Students,\n\nMarlow Biotech is hiring Research Associates (CTC 8 LPA).\nEligibility: CSE, IT, BT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/marlowRA by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T09:00:00+05:30",
+      "subject": "REMINDER: Campus Drive: Marlow Biotech - Research Associate (2026 Batch)",
+      "body": "Dear Students,\n\nThis is a reminder that registration for the Marlow Biotech Research Associate drive closes soon. Apply if you haven't already!\n\nRegards,\nCareer Office"
+    }
+  ]
+}

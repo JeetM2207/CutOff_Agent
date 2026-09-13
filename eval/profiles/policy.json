@@ -1,0 +1,8 @@
+{
+  "career_office_senders": ["careers.demo.college@gmail.com"],
+  "college_domain": "college.edu",
+  "one_offer_rule": true,
+  "dream_multiplier": 1.5,
+  "no_show_penalty_text": "Two no-shows in one season bars you from the next season's drives.",
+  "allowed_form_domains": ["docs.google.com", "forms.gle"]
+}

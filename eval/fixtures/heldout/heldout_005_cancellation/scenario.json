@@ -1,0 +1,22 @@
+{
+  "id": "heldout_005_cancellation",
+  "category": "cancellation",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T09:00:00+05:30",
+      "subject": "Placement Drive: Oakhollow Systems - Backend Engineer",
+      "body": "Dear Students,\n\nOakhollow Systems - Backend Engineer (CTC 11 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nApply: https://forms.gle/oakhollowBE by 11:59 PM, 16 September 2026.\n\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T16:00:00+05:30",
+      "subject": "DRIVE CANCELLED: Oakhollow Systems",
+      "body": "Dear Students,\n\nWe regret to inform you that Oakhollow Systems has cancelled their campus visit this season. The Backend Engineer drive stands cancelled.\n\nCareer Office"
+    }
+  ]
+}

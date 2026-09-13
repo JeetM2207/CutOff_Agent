@@ -1,0 +1,15 @@
+{
+  "id": "dev_019_deadline_already_passed",
+  "category": "deadline_already_passed",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-11T08:30:00+05:30",
+      "subject": "Campus Drive: Sable Finance - Finance Analyst (2026 Batch) [Forwarded late]",
+      "body": "Dear Students,\n\nSable Finance visited campus for the Finance Analyst role (CTC 9 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegistration closed on: https://forms.gle/sableFA by 11:59 PM, 1 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

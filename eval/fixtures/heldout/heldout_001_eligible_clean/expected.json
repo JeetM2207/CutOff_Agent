@@ -1,0 +1,18 @@
+{
+  "drives": [{
+    "drive_id": "halcyon-devices:embedded-engineer:2026",
+    "version": 1,
+    "verdict": "ELIGIBLE",
+    "reasons": [],
+    "deadline": "2026-09-21T23:59:00+05:30",
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "halcyon-devices:embedded-engineer:2026" },
+    { "app": "sheets", "kind": "row", "drive_id": "halcyon-devices:embedded-engineer:2026", "verdict": "ELIGIBLE" },
+    { "app": "calendar", "kind": "active_event", "drive_id": "halcyon-devices:embedded-engineer:2026", "event": "deadline" }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

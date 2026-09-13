@@ -1,0 +1,36 @@
+[project]
+name = "cutoff"
+version = "0.1.0"
+description = "The agent that never lets a student miss a campus recruiting drive they qualify for, or register for one they don't."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic==1.5.0",
+    "openai==3.13.0",  # OpenRouter fallback provider (cutoff/llm/client.py) — not in the original spec's list
+    "pydantic>=2.13,<3",
+    "python-dotenv==1.2.3",
+    "PyYAML==6.0.3",
+    "fastapi==0.141.1",
+    "uvicorn==0.52.4",
+    "httpx==0.28.1",
+    "google-api-python-client==2.200.0",
+    "google-auth==2.58.0",
+    "google-auth-oauthlib==1.4.1",
+    "pdfplumber==0.11.10",
+    "reportlab==5.0.1",
+    "dateparser==1.4.3",
+    "rapidfuzz==3.14.6",
+    "tzdata==2026.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cutoff*"]

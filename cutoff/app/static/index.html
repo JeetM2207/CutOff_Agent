@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CutOff</title>
+  <link rel="stylesheet" href="/static/styles.css?v=7" />
+</head>
+<body>
+  <header>
+    <div class="title-block">
+      <h1>CutOff</h1>
+      <p class="tagline">Never miss a drive you qualify for. Never register for one you don't.</p>
+    </div>
+    <nav class="tabs">
+      <button data-view="board" class="active">Board</button>
+      <button data-view="trace">Live trace</button>
+      <button data-view="eval">Eval</button>
+      <button data-view="health">Self-healing</button>
+    </nav>
+  </header>
+
+  <div id="demo-panel" class="demo-panel" hidden>
+    <div class="demo-panel-header">
+      <strong>Demo controls</strong>
+      <span class="demo-panel-hint">MODE=fake, DEMO_MODE=1 — no real accounts touched, real LLM calls</span>
+    </div>
+    <div class="demo-panel-row">
+      <span class="demo-panel-label">Send an email:</span>
+      <button data-demo-send="new_drive_1">Eligible drive</button>
+      <button data-demo-send="new_drive_2">Needs-review drive</button>
+      <button data-demo-send="new_drive_3">Not-eligible drive</button>
+      <button data-demo-send="correction">Correction</button>
+      <button data-demo-send="shortlist">Shortlist PDF</button>
+      <button data-demo-send="scam" class="demo-danger">Scam email</button>
+    </div>
+    <div class="demo-panel-row">
+      <span class="demo-panel-label">Chaos:</span>
+      <button data-demo-chaos="calendar" class="demo-danger">Break calendar</button>
+      <button data-demo-chaos="telegram" class="demo-danger">Break Telegram</button>
+      <button data-demo-chaos="sheets" class="demo-danger">Break Sheets</button>
+      <button data-demo-chaos="clear">Clear chaos</button>
+      <button id="demo-reset" class="demo-danger">Reset demo data</button>
+    </div>
+    <div id="demo-status" class="demo-status"></div>
+  </div>
+
+  <main>
+    <section id="view-board" class="view active">
+      <div id="bubble-legend" class="board-legend"></div>
+      <div id="board" class="board"></div>
+      <div id="drive-detail"></div>
+    </section>
+
+    <section id="view-trace" class="view">
+      <p class="tagline" id="trace-run-label"></p>
+      <div id="trace-timeline" class="trace-timeline"></div>
+    </section>
+
+    <section id="view-eval" class="view">
+      <div id="eval-content"></div>
+    </section>
+
+    <section id="view-health" class="view">
+      <div id="health-content"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js?v=7"></script>
+</body>
+</html>

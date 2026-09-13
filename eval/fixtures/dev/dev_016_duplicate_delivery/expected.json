@@ -1,0 +1,15 @@
+{
+  "drives": [{
+    "drive_id": "cinder-robotics:robotics-engineer:2026",
+    "version": 1,
+    "verdict": "ELIGIBLE",
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "cinder-robotics:robotics-engineer:2026" },
+    { "app": "sheets", "kind": "row", "drive_id": "cinder-robotics:robotics-engineer:2026", "verdict": "ELIGIBLE", "version": 1 }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ]
+}

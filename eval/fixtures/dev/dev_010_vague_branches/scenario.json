@@ -1,0 +1,16 @@
+{
+  "id": "dev_010_vague_branches",
+  "category": "vague_branches",
+  "profile": "riya.json",
+  "profile_overrides": { "branch": "IT" },
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Brightline Media - Software Developer (2026 Batch)",
+      "body": "Dear Students,\n\nBrightline Media is hiring Software Developers (CTC 10 LPA).\nEligibility: CSE and allied branches | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/brightlineSD by 11:59 PM, 25 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+"""Pydantic v2 data model (Section 7). All datetimes are stored/passed as UTC;
+convert to the profile's timezone only for display."""
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+
+# --- Mail -------------------------------------------------------------------
+
+class AttachmentMeta(BaseModel):
+    attachment_id: str
+    filename: str
+    mime_type: str
+    size_bytes: int = 0
+
+
+class EmailRef(BaseModel):
+    message_id: str
+    thread_id: str
+    from_addr: str
+    subject: str
+    received_at: datetime
+
+
+class EmailMessage(BaseModel):
+    message_id: str
+    thread_id: str
+    from_addr: str
+    subject: str
+    body_text: str
+    received_at: datetime
+    attachments: list[AttachmentMeta] = Field(default_factory=list)
+
+
+# --- Extraction ---------------------------------------------------------------
+
+class Criteria(BaseModel):
+    min_gpa: float | None = None
+    gpa_inclusive: bool | None = None  # None = wording unclear
+    branches_allowed: list[str] = Field(default_factory=list)
+    branches_text: str | None = None  # raw wording kept for review
+    max_active_backlogs: int | None = None
+    min_10th_pct: float | None = None
+    min_12th_pct: float | None = None
+    batch_years: list[int] = Field(default_factory=list)
+    other_conditions: list[str] = Field(default_factory=list)
+
+
+class DriveEvent(BaseModel):
+    kind: Literal["TEST", "INTERVIEW", "TALK", "OTHER"]
+    start: datetime
+    end: datetime | None = None
+    location_or_link: str | None = None
+
+
+class Evidence(BaseModel):
+    field: str
+    quote: str
+
+
+class Notice(BaseModel):
+    notice_type: Literal[
+        "NEW_DRIVE", "REVISION", "CANCELLATION", "SHORTLIST",
+        "SCHEDULE", "REMINDER", "NON_DRIVE", "SUSPICIOUS",
+    ]
+    company: str | None = None
+    role: str | None = None
+    role_category: Literal["SDE", "DATA", "CORE", "PRODUCT", "BUSINESS", "OTHER"] | None = None
+    salary_lpa: float | None = None
+    criteria: Criteria = Field(default_factory=Criteria)
+    deadline_text: str | None = None
+    deadline: datetime | None = None
+    form_url: str | None = None
+    events: list[DriveEvent] = Field(default_factory=list)
+    change_summary: str | None = None  # for REVISION / CANCELLATION
+    suspicion_signals: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+    unverified_fields: list[str] = Field(default_factory=list)  # filled by the grounding validator
+
+
+# --- Canonical drive ----------------------------------------------------------
+
+class Drive(BaseModel):
+    drive_id: str  # slug: "zentrix-analytics:data-analyst:2026"
+    company: str
+    role: str
+    version: int = 1
+    status: Literal["OPEN", "CLOSED", "CANCELLED"] = "OPEN"
+    criteria: Criteria = Field(default_factory=Criteria)
+    deadline: datetime | None = None
+    form_url: str | None = None
+    events: list[DriveEvent] = Field(default_factory=list)
+    source_message_ids: list[str] = Field(default_factory=list)
+    history: list[dict] = Field(default_factory=list)
+    # Not listed explicitly in Section 7's Drive model, but needed across revisions
+    # for the policy one-offer check and resume selection (see NOTES.md, Phase 1).
+    salary_lpa: float | None = None
+    role_category: Literal["SDE", "DATA", "CORE", "PRODUCT", "BUSINESS", "OTHER"] | None = None
+    registered: bool = False
+    last_verdict: Literal["ELIGIBLE", "NOT_ELIGIBLE", "NEEDS_REVIEW"] | None = None
+
+
+# --- Student / policy -----------------------------------------------------------
+
+class StudentProfile(BaseModel):
+    name: str
+    roll_no: str
+    email: str
+    branch: str
+    gpa: float
+    gpa_scale: float = 10.0
+    active_backlogs: int
+    pct_10th: float | None = None
+    pct_12th: float | None = None
+    batch_year: int
+    placed_status: Literal["UNPLACED", "PLACED"] = "UNPLACED"
+    current_offer_lpa: float | None = None
+    timezone: str = "Asia/Kolkata"
+
+
+class CollegePolicy(BaseModel):
+    career_office_senders: list[str] = Field(default_factory=list)
+    college_domain: str
+    one_offer_rule: bool = False
+    dream_multiplier: float = 1.0
+    no_show_penalty_text: str = ""
+    allowed_form_domains: list[str] = Field(
+        default_factory=lambda: ["docs.google.com", "forms.gle"]
+    )
+
+
+class Verdict(BaseModel):
+    result: Literal["ELIGIBLE", "NOT_ELIGIBLE", "NEEDS_REVIEW"]
+    reasons: list[str] = Field(default_factory=list)  # GPA, BRANCH, BACKLOGS, PCT_10, PCT_12, BATCH, POLICY_ONE_OFFER
+    questions: list[str] = Field(default_factory=list)  # for NEEDS_REVIEW
+
+
+# --- Actions --------------------------------------------------------------------
+
+class Action(BaseModel):
+    action_id: str  # uuid4
+    idempotency_key: str  # UNIQUE, e.g. "cal:<drive_id>:deadline"
+    drive_id: str
+    drive_version: int
+    app: Literal["sheets", "calendar", "telegram", "drive"]
+    kind: str  # upsert_row | upsert_event | cancel_event | send_msg | edit_msg
+    tier: Literal["T1_REVERSIBLE", "T2_NEEDS_HUMAN"]
+    payload: dict = Field(default_factory=dict)
+    status: Literal[
+        "PLANNED", "AWAITING_APPROVAL", "APPROVED", "EXECUTING",
+        "DONE", "VERIFIED", "FAILED", "VOIDED",
+    ] = "PLANNED"
+    attempts: int = 0
+    last_error: str | None = None
+    lease_until: datetime | None = None
+    result: dict | None = None
+
+
+# --- Adapter-facing helper types ---------------------------------------------
+
+class CalendarEvent(BaseModel):
+    event_id: str
+    title: str
+    start: datetime
+    end: datetime | None = None
+    description: str | None = None
+    location: str | None = None
+    status: Literal["confirmed", "cancelled", "tentative"] = "confirmed"
+
+
+class ResumeFile(BaseModel):
+    file_id: str
+    name: str
+    web_view_link: str
+
+
+class Button(BaseModel):
+    text: str
+    callback_data: str

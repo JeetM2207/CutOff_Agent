@@ -1,0 +1,15 @@
+{
+  "id": "dev_030_non_drive_resume_workshop",
+  "category": "non_drive_resume_workshop",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Resume Building Workshop - 6 September 2026",
+      "body": "Dear Students,\n\nThe career office is conducting a resume building workshop on 6 September 2026, 4:00 PM, in Seminar Hall 2. All final-year students are encouraged to attend. This is not tied to any specific company or recruiting drive.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

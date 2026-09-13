@@ -1,0 +1,16 @@
+{
+  "id": "heldout_002_not_eligible_multiple_reasons",
+  "category": "not_eligible_multiple_reasons",
+  "profile": "riya.json",
+  "profile_overrides": { "active_backlogs": 1 },
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:30:00+05:30",
+      "subject": "Placement Drive: Gantry Systems - Test Engineer",
+      "body": "Dear Students,\n\nGantry Systems - Test Engineer (CTC 6.5 LPA).\nCriteria: CGPA 8.0 or higher, no history of active backlogs, open to ME and CE branches only.\nApply: https://forms.gle/gantryTE by 11:59 PM, 23 September 2026.\n\nCareer Office"
+    }
+  ]
+}

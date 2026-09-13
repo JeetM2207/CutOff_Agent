@@ -1,0 +1,25 @@
+{
+  "id": "dev_022_shortlist_included_clean",
+  "category": "shortlist_included_clean",
+  "profile": "riya.json",
+  "now": "2026-09-16T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Cobalt Freight - Operations Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nCobalt Freight is hiring Operations Analysts (CTC 8.5 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/cobaltOps by 11:59 PM, 22 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-15T18:00:00+05:30",
+      "subject": "SHORTLIST: Cobalt Freight - Operations Analyst",
+      "body": "Dear Students,\n\nPlease find attached the shortlist of candidates for the Cobalt Freight Operations Analyst role. If your roll number appears on the list, you have been shortlisted.\n\nRegards,\nCareer Office",
+      "attachments": [
+        { "attachment_id": "att1", "filename": "shortlist.pdf", "mime_type": "application/pdf" }
+      ]
+    }
+  ]
+}

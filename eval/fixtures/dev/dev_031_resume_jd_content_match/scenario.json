@@ -1,0 +1,18 @@
+{
+  "id": "dev_031_resume_jd_content_match",
+  "category": "resume_jd_content_match",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Lattice Analytics - Insights Associate (2026 Batch)",
+      "body": "Dear Students,\n\nLattice Analytics is hiring Insights Associates (CTC 10 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nFull role details and the job description are attached.\nRegister here: https://forms.gle/latticeIA by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office",
+      "attachments": [
+        {"attachment_id": "att1", "filename": "jd.pdf", "mime_type": "application/pdf"}
+      ]
+    }
+  ]
+}

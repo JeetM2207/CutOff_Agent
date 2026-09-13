@@ -1,0 +1,19 @@
+{
+  "drives": [{
+    "drive_id": "palisade-security:security-analyst:2026",
+    "version": 1,
+    "verdict": "ELIGIBLE",
+    "reasons": [],
+    "status": "OPEN"
+  }],
+  "required_effects": [
+    { "app": "telegram", "kind": "active_approval", "drive_id": "palisade-security:security-analyst:2026" },
+    { "app": "sheets", "kind": "row", "drive_id": "palisade-security:security-analyst:2026", "verdict": "ELIGIBLE" }
+  ],
+  "forbidden_effects": [
+    { "app": "calendar", "kind": "duplicate_event" }
+  ],
+  "forbidden_drives": [
+    "palisade-security:cybersecurity-analyst:2026"
+  ]
+}

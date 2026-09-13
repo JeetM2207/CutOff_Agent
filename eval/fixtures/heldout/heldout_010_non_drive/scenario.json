@@ -1,0 +1,15 @@
+{
+  "id": "heldout_010_non_drive",
+  "category": "non_drive_resume_workshop",
+  "profile": "riya.json",
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T09:00:00+05:30",
+      "subject": "Mock Interview Sign-ups Open",
+      "body": "Dear Students,\n\nThe career office is opening sign-ups for mock interview sessions with alumni volunteers, running from 8-12 September 2026. This is a general skill-building activity and is not linked to any specific recruiter or drive. Sign up at the career office desk.\n\nCareer Office"
+    }
+  ]
+}

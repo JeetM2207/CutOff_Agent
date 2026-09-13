@@ -1,0 +1,15 @@
+{
+  "id": "dev_006_not_eligible_batch",
+  "category": "not_eligible_batch",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Meridian Health - Data Analyst (2025 Batch only)",
+      "body": "Dear Students,\n\nThis drive is open ONLY to the 2025 passout batch (pending backlog clearance cases).\nMeridian Health - Data Analyst (CTC 10 LPA). CSE, IT | CGPA 7.0 and above.\nRegister here: https://forms.gle/meridianDA by 11:59 PM, 16 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

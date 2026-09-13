@@ -1,0 +1,15 @@
+{
+  "id": "dev_003_not_eligible_branch",
+  "category": "not_eligible_branch",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Aurum Capital - Quant Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nAurum Capital is visiting for the Quant Analyst role (CTC 18 LPA).\nEligibility: ECE, EEE only | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/aurumQuant by 11:59 PM, 19 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "heldout_001_eligible_clean",
+  "category": "clean_new_drive_eligible",
+  "profile": "riya.json",
+  "now": "2026-09-06T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-05T10:30:00+05:30",
+      "subject": "PLACEMENT NOTICE: Halcyon Devices hiring Embedded Engineers",
+      "body": "Dear Students,\n\nHalcyon Devices will be conducting a campus drive for the Embedded Engineer position (CTC 10.5 LPA).\nEligibility criteria: Branches - CSE, ECE, EEE. CGPA requirement - 7 and above. Candidates must have zero active backlogs.\nInterested and eligible students should fill the form at https://forms.gle/halcyonEE latest by 11:59 PM on 21 September 2026.\n\nThanks,\nCareer Office"
+    }
+  ]
+}

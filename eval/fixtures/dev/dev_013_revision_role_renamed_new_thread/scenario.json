@@ -1,0 +1,22 @@
+{
+  "id": "dev_013_revision_role_renamed_new_thread",
+  "category": "revision_role_renamed_new_thread",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Palisade Security - Security Analyst (2026 Batch)",
+      "body": "Dear Students,\n\nPalisade Security is hiring Security Analysts (CTC 9 LPA).\nEligibility: CSE, IT | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/palisadeSA by 11:59 PM, 22 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t2",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T11:00:00+05:30",
+      "subject": "IMPORTANT: Palisade Security role title corrected",
+      "body": "Dear Students,\n\nNote: the Palisade Security role announced earlier is officially titled 'Cybersecurity Analyst', not 'Security Analyst'. This is the same drive, same eligibility, same deadline as before. No new registration needed if you already applied.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

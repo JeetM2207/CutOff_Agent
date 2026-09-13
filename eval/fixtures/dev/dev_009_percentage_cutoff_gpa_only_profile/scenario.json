@@ -1,0 +1,15 @@
+{
+  "id": "dev_009_percentage_cutoff_gpa_only_profile",
+  "category": "percentage_cutoff_gpa_only_profile",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "Campus Drive: Ironwood Labs - Support Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nIronwood Labs is hiring Support Engineers (CTC 7 LPA).\nEligibility: CSE, IT | Minimum 60% aggregate throughout academics | No active backlogs.\nRegister here: https://forms.gle/ironwoodSE by 11:59 PM, 24 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

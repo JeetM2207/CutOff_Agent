@@ -1,0 +1,22 @@
+{
+  "id": "heldout_004_revision_becomes_ineligible",
+  "category": "revision_to_ineligible",
+  "profile": "riya.json",
+  "now": "2026-09-11T20:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T09:00:00+05:30",
+      "subject": "Placement Drive: Windham Freight - Logistics Analyst",
+      "body": "Dear Students,\n\nWindham Freight - Logistics Analyst (CTC 8 LPA).\nEligibility: CSE, IT, ME | CGPA 6.5 and above | No active backlogs.\nApply: https://forms.gle/windhamLA by 11:59 PM, 14 September 2026.\n\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-11T17:00:00+05:30",
+      "subject": "Re: Placement Drive: Windham Freight - Logistics Analyst",
+      "body": "Update from Windham Freight: the CGPA requirement has been raised to 8.5 and above with immediate effect, due to a higher-than-expected number of applicants. Apologies for the inconvenience."
+    }
+  ]
+}

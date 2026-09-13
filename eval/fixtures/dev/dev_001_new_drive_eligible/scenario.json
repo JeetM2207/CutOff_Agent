@@ -1,0 +1,15 @@
+{
+  "id": "dev_001_new_drive_eligible",
+  "category": "clean_new_drive_eligible",
+  "profile": "riya.json",
+  "now": "2026-09-05T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-04T11:00:00+05:30",
+      "subject": "CAMPUS DRIVE: Northwind Systems - Software Engineer (2026 Batch)",
+      "body": "Dear Students,\n\nNorthwind Systems is visiting campus for the Software Engineer role (CTC 12 LPA).\nEligibility: B.Tech CSE, IT, ECE | CGPA 7.0 and above | No active backlogs | 2026 batch only.\nRegister here: https://forms.gle/northwindSDE by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office"
+    }
+  ]
+}

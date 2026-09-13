@@ -1,0 +1,8 @@
+none: {}
+gmail_throttle:     { gmail: { http_429_first_n: 3, retry_after_s: 1 } }
+calendar_flaky:     { calendar: { http_500_rate: 0.3, seed: 7 } }
+telegram_timeout:   { telegram: { timeout_first_n: 2 } }
+duplicate_delivery: { gmail: { duplicate_every_message: true } }
+crash_mid_run:      { executor: { raise_after_actions: 3 } }
+kitchen_sink:       { gmail: { http_429_first_n: 2 }, calendar: { http_500_rate: 0.2, seed: 3 },
+                      telegram: { timeout_first_n: 1 }, executor: { raise_after_actions: 5 } }

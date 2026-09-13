@@ -1,0 +1,22 @@
+{
+  "id": "dev_015_cancellation",
+  "category": "cancellation",
+  "profile": "riya.json",
+  "now": "2026-09-11T09:00:00+05:30",
+  "messages": [
+    {
+      "message_id": "m1", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-08T11:00:00+05:30",
+      "subject": "Campus Drive: Haddon Energy - Graduate Engineer Trainee (2026 Batch)",
+      "body": "Dear Students,\n\nHaddon Energy is hiring Graduate Engineer Trainees (CTC 9 LPA).\nEligibility: CSE, EEE, ME | CGPA 7.0 and above | No active backlogs.\nRegister here: https://forms.gle/haddonGET by 11:59 PM, 20 September 2026.\n\nRegards,\nCareer Office"
+    },
+    {
+      "message_id": "m2", "thread_id": "t1",
+      "from": "Career Office <careers.demo.college@gmail.com>",
+      "received_at": "2026-09-10T15:00:00+05:30",
+      "subject": "CANCELLED: Haddon Energy campus drive",
+      "body": "Dear Students,\n\nHaddon Energy has withdrawn from campus recruitment this season. The Graduate Engineer Trainee drive is cancelled with immediate effect. We apologize for the inconvenience.\n\nRegards,\nCareer Office"
+    }
+  ]
+}
