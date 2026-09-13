@@ -20,6 +20,7 @@ dependencies = [
     "dateparser==1.4.3",
     "rapidfuzz==3.14.6",
     "tzdata==2026.3",
+    "ddgs==9.16.0",  # cutoff/adapters/web_research.py — not an official DuckDuckGo API, see its own docstring
 ]
 
 [project.optional-dependencies]

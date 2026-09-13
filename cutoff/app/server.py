@@ -460,6 +460,7 @@ def demo_send(body: DemoSendRequest) -> dict:
         calendar=_demo["calendar_w"], sheets=_demo["sheets_w"],
         master_profile=_load_master_profile(settings),
         generated_resume_dir=settings.generated_resume_dir, public_base_url=settings.public_base_url,
+        enable_prep_intel=settings.enable_prep_intel,
     )
     result = run.process_message(msg, ctx, profile=DEMO_STUDENT_PROFILE, policy=DEMO_COLLEGE_POLICY, now=datetime.now(timezone.utc))
 

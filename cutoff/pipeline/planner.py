@@ -131,7 +131,7 @@ def _answer_card_text(
         form_line = f"Form: {drive.form_url}"
     else:
         form_line = "Form: not found, check the email"
-    return (
+    text = (
         f"{drive.company} — {drive.role}\n"
         f"{profile.name} ({profile.roll_no}, {profile.branch})\n"
         f"GPA: {profile.gpa}\n"
@@ -139,6 +139,37 @@ def _answer_card_text(
         f"{resume_line}\n"
         f"{form_line}"
     )
+    prep_intel_block = _prep_intel_block(drive)
+    if prep_intel_block:
+        text += f"\n\n{prep_intel_block}"
+    return text
+
+
+def _prep_intel_block(drive: Drive) -> str | None:
+    """New extension: interview-prep intel (cutoff.pipeline.prep_intel),
+    shown right below the form link. None whenever it was never attempted,
+    found nothing, or wasn't enabled at all -- the card then falls back
+    cleanly to the layout above with no broken variables or empty headers.
+
+    Deliberately plain text, not the Markdown (**bold**, [text](url)) a
+    literal reading of the spec called for: TelegramMessenger.send/edit
+    (cutoff/adapters/telegram_real.py) never sets parse_mode, so Telegram
+    would show raw asterisks/brackets rather than rendering them. Turning
+    on parse_mode globally to fix that would risk a worse failure than an
+    ugly line: company/role names come straight from unpredictable email
+    text, and Telegram rejects the ENTIRE message if any part of it isn't
+    valid Markdown (an unescaped "_" or "[" anywhere, e.g. in a company
+    name) -- breaking the core registration card over a cosmetic want on
+    a bonus feature isn't a trade worth making. Plain URLs still render as
+    clickable links in Telegram without any parse_mode at all."""
+    intel = drive.prep_intel
+    if not intel or not intel.get("strategy_summary"):
+        return None
+    links = intel.get("top_reference_links") or []
+    lines = [f"💡 Prep Strategy: {intel['strategy_summary']}"]
+    if links:
+        lines.append(f"🔗 Study materials: {' | '.join(links)}")
+    return "\n".join(lines)
 
 
 def _plan_approval(

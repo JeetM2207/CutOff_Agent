@@ -57,6 +57,15 @@ class Settings:
     generated_resume_dir: str
     public_base_url: str
 
+    # Interview-prep intel gathering (new extension): off by default,
+    # deliberately opt-in -- unlike the GitHub/LeetCode onboarding
+    # enrichment (a one-time, student-triggered action), this runs
+    # automatically on every ELIGIBLE drive, and depends on an unofficial
+    # search library (see cutoff/adapters/web_research.py's own docstring)
+    # rather than a documented API. False means the approval card looks
+    # exactly as it always did, zero added latency or external dependency.
+    enable_prep_intel: bool
+
     telegram_bot_token: str
     telegram_chat_id: str
 
@@ -114,6 +123,7 @@ def get_settings() -> Settings:
         master_profile_path=os.getenv("MASTER_PROFILE_PATH", "config/master_profile.yaml"),
         generated_resume_dir=os.getenv("GENERATED_RESUME_DIR", "generated_resumes"),
         public_base_url=os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000"),
+        enable_prep_intel=_bool("ENABLE_PREP_INTEL", "0"),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
         telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", ""),
         gmail_api_base_url=os.getenv("GMAIL_API_BASE_URL", ""),

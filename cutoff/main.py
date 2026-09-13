@@ -117,6 +117,7 @@ def _worker_loop(settings: Settings, adapters: AppAdapters) -> None:
         master_profile=_load_master_profile(settings),
         generated_resume_dir=settings.generated_resume_dir,
         public_base_url=settings.public_base_url,
+        enable_prep_intel=settings.enable_prep_intel,
     )
     exec_adapters = Adapters(
         sheets=adapters.sheets, calendar=adapters.calendar, messenger=adapters.messenger, files=adapters.files,

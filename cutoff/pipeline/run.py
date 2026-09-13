@@ -14,6 +14,7 @@ from cutoff.llm import grounding
 from cutoff.llm.extract import EXTRACTION_FAILED_SENTINEL
 from cutoff.models import CollegePolicy, EmailMessage, MasterProfile, Notice, ResumeFile, StudentProfile
 from cutoff.pipeline import clash, eligibility, executor, form_prefill, ingest, planner, resolve, security, shortlist, timeparse
+from cutoff.pipeline import prep_intel as prep_intel_mod
 from cutoff.pipeline import resume as resume_mod
 
 ExtractFn = Callable[..., Notice]
@@ -57,6 +58,11 @@ class PipelineContext:
     master_profile: MasterProfile | None = None
     generated_resume_dir: str | None = None
     public_base_url: str = ""
+    # Interview-prep intel (new extension). False (the default) means
+    # drive.prep_intel is never touched and the approval card looks exactly
+    # as it always did — same opt-in, never-block-planning guarantee as
+    # everything else optional here.
+    enable_prep_intel: bool = False
 
 
 @dataclass
@@ -242,6 +248,19 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
                 # from. Section 6.4 extension.
                 drive.jd_text = ingested.attachment_text or drive.jd_text
                 resolve.save_drive(ctx.db_path, drive)
+
+                if ctx.enable_prep_intel and drive.prep_intel is None:
+                    # Fetched at most once per drive (prep_intel.py always
+                    # returns a dict, marking the attempt even on failure/no
+                    # results) -- a revision or reminder replan later never
+                    # re-searches. Never blocks planning: prep_intel.py
+                    # itself never raises.
+                    with trace.span("prep_intel", drive_id=drive.drive_id):
+                        drive.prep_intel = prep_intel_mod.fetch_prep_intel(
+                            drive.company, drive.role, api_key=ctx.api_key, model=ctx.model,
+                            provider=ctx.provider, base_url=ctx.base_url,
+                        )
+                        resolve.save_drive(ctx.db_path, drive)
 
                 if drive.resolved_resume_pick is not None:
                     # The student already answered "use mine / generate one"

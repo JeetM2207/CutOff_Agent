@@ -372,6 +372,28 @@ exactly the wasted-tokens-at-the-wrong-time problem being guarded against. The J
 now reachable only via `resume_mode="auto"` (no master profile configured at all, choice card never
 shown), keeping every pre-existing caller's behavior unchanged. Full suite: 331/331 (2 new tests).
 
+## Interview-prep intel on the approval card
+
+Searches LeetCode/GeeksforGeeks/Glassdoor (via `ddgs`, DuckDuckGo's actively-maintained search library —
+the officially-frozen `duckduckgo-search` package's successor) once a drive is ELIGIBLE, distills what's
+frequently tested (forced tool-use, `top_reference_links` enum-constrained to the real search-result URLs,
+same grounding discipline as everywhere else this session), and shows it on the approval card next to the
+form link. Every failure mode — search timeout, rate limit, no results, LLM error — degrades to nothing
+shown, never blocks the approval card from sending.
+
+Two deliberate deviations from the literal spec, both protecting something more important than this one
+feature: **opt-in** (`ENABLE_PREP_INTEL`, default off) rather than automatic for every user, since unlike
+the onboarding enrichment this runs on every single ELIGIBLE drive and depends on an unofficial search
+library; and **plain text, not Markdown**, since `telegram_real.py`'s `send`/`edit` never set `parse_mode`
+— turning that on globally to bold one bonus line would risk Telegram rejecting the *entire* message
+(including the core registration card) over an unescaped character in an unpredictable company name.
+
+Fetched at most once per drive (`Drive.prep_intel`, same pattern as `jd_text`/`resolved_resume_pick`) —
+never re-searched on a revision or reminder replan. Verified live against the real search engine and the
+real LLM (TCS / Software Engineer): 5 real results, a grounded 2-sentence summary, both picked links
+genuinely among the real results. 27 new tests, every external boundary stubbed. Full suite: 358/358
+passing (331 prior + 27 new).
+
 ## Known limitations
 
 - `list_suspicious`'s reach is bounded by `SUSPICIOUS_QUERY_KEYWORDS` — a fixed phrase list. A
@@ -391,6 +413,8 @@ shown), keeping every pre-existing caller's behavior unchanged. Full suite: 331/
 - If a revision lands for a drive whose resume choice is still un-answered (rare timing window), the edited card shows "Resume: none on file" rather than re-prompting — an honest degrade, not a crash, but not re-asked either until the student eventually answers the original choice card.
 - LeetCode's stats endpoint (`cutoff/adapters/developer_footprint.py`) is not an officially documented public API — it's the same one many open-source "stats card" tools already rely on, but it could change shape or be blocked without notice; every failure there already degrades to `None` rather than breaking onboarding, so this is a quality-of-enrichment risk, not a reliability one. GitHub's REST API is officially public and documented, but unauthenticated requests are capped at 60/hour — plenty for one student's one-time onboarding, not for rapid repeated testing.
 - A staged onboarding import (`config/.staged_<token>.yaml` + its `profile_imports` row) has no expiry — if a student never taps Approve or Discard, both linger indefinitely. Harmless (never used for anything until approved) but not automatically cleaned up.
+- `ddgs` (`cutoff/adapters/web_research.py`) is, like LeetCode's stats endpoint above, not an officially sanctioned API — it works by querying DuckDuckGo's own search interface, which can change shape or start rate-limiting without notice. Every failure there already degrades to an empty result (no prep-intel section shown), never a crash, so this is a quality-of-enrichment risk, not a reliability one — and it's off by default (`ENABLE_PREP_INTEL=0`) for exactly this reason.
+- The prep-intel block on the approval card is deliberately plain text, not Markdown — see the section above for why turning on `parse_mode` globally to bold it would risk breaking the core registration card instead.
 
 ## Reproduce
 

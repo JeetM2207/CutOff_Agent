@@ -111,6 +111,11 @@ class Drive(BaseModel):
     # the same resume instead of asking again.
     jd_text: str | None = None
     resolved_resume_pick: dict | None = None
+    # Interview-prep intel (new extension: cutoff.pipeline.prep_intel). None
+    # means "never attempted yet"; once attempted (success or not), always a
+    # dict with an "attempted" marker — fetched at most once per drive, not
+    # re-searched on every subsequent revision/reminder replan.
+    prep_intel: dict | None = None
 
 
 # --- Student / policy -----------------------------------------------------------
