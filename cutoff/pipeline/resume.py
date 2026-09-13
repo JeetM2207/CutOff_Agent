@@ -145,7 +145,12 @@ def select_resume_smart(
     if resume_mode == "match":
         return select_resume(role_category, files), None
 
-    resumes = files.list_resumes()
+    try:
+        resumes = files.list_resumes()
+    except Exception:
+        logger.exception("files.list_resumes failed; falling back to default resume selection")
+        return select_resume(role_category, files), None
+
     if not jd_text.strip():
         return select_resume(role_category, files), None
 

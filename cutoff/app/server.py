@@ -201,13 +201,33 @@ def get_drive_detail(drive_id: str) -> dict:
         for a in action_rows
     ]
 
+    prefilled_form_url = None
+    for a in actions:
+        if a["app"] == "telegram":
+            text = a["payload"].get("text", "")
+            for line in text.splitlines():
+                if "Form (pre-filled" in line and "http" in line:
+                    prefilled_form_url = line.split(":", 1)[1].strip()
+                    break
+
+    settings = get_settings()
+    sheet_url = f"https://docs.google.com/spreadsheets/d/{settings.sheet_id}/edit" if settings.sheet_id else None
+
     return {
         "drive": _drive_summary(drive),
         "criteria": drive.criteria.model_dump(mode="json"),
         "form_url": drive.form_url,
+        "prefilled_form_url": prefilled_form_url,
         "events": [e.model_dump(mode="json") for e in drive.events],
         "history": history,
         "actions": actions,
+        "prep_intel": drive.prep_intel,
+        "resolved_resume_pick": drive.resolved_resume_pick,
+        "platform_links": {
+            "sheet_url": sheet_url,
+            "calendar_url": "https://calendar.google.com",
+            "telegram_url": "https://t.me/hackathon_cutoff_bot",
+        }
     }
 
 

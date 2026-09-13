@@ -33,10 +33,10 @@ def _tool_schema(titles: list[str]) -> dict:
             _question_key(i): {
                 "type": "string",
                 "description": (
-                    f'Answer to: "{title}". A brief, honest answer (1-3 sentences, or a single fact '
-                    "for something like a phone number or link) grounded only in the resume and job "
-                    "description text below. Empty string if there isn't enough real information to "
-                    "answer this specific question — never invent a skill, project, number, or experience."
+                    f'Answer to: "{title}". A concise, grounded draft answer (1-3 sentences for fit/motivation questions, '
+                    "or a factual answer/list for skills, links, or facts) based on the resume and job description below. "
+                    "Synthesize genuine fit from the candidate's actual projects and skills; never invent qualifications. "
+                    "Only return empty string if completely unrelated to their background."
                 ),
             }
             for i, title in enumerate(titles)
@@ -46,12 +46,20 @@ def _tool_schema(titles: list[str]) -> dict:
 
 
 _SYSTEM = (
-    "You are drafting short answers to a job application form's open-ended questions, on behalf of a "
+    "You are drafting short answers to a job application form's questions, on behalf of a "
     "student, using only their resume and the job description below. These are drafts the student will "
-    "review and edit before submitting anything themselves. Ground every answer in what is actually "
-    "written — never invent a specific skill, project, number, or experience that isn't there. If a "
-    "question can't be honestly answered from the resume/JD, return an empty string for it. Call "
-    "answer_form_questions with one entry per question."
+    "review and edit before submitting anything themselves.\n\n"
+    "Instructions:\n"
+    "1. For questions asking why the company should hire the student, why they want to join, or what makes "
+    "them a great fit (e.g. 'Why should we hire you?', 'Why this company?', 'Tell us about yourself'), "
+    "synthesize a concise, persuasive 1-3 sentence pitch connecting their genuine technical skills and projects "
+    "from the resume to the requirements of the job description. Do NOT leave these blank.\n"
+    "2. For skill or tech stack questions, list their relevant technical skills from the resume (comma-separated "
+    "if requested).\n"
+    "3. For factual questions (phone number, profile links, locations), provide the exact value from the resume.\n"
+    "4. Ground all claims in what is actually written in the resume — never invent companies, projects, or degrees.\n"
+    "5. Only return an empty string if a question cannot be reasonably addressed from their resume background.\n"
+    "Call answer_form_questions with one entry per question."
 )
 
 

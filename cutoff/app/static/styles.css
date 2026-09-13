@@ -545,6 +545,196 @@ table.eval-table tbody tr:hover td { background: var(--surface-alt); }
 .circuit-card[data-state="open"] { border-color: var(--danger); }
 .circuit-card[data-state="open"] .circuit-status { color: var(--danger); }
 
+/* --- Platform Ecosystem Bar --- */
+.platform-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 2rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  font-size: 0.82rem;
+}
+
+.platform-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-ring 1.8s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.platform-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.platform-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.platform-chip.link:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand-dark);
+}
+
+.platform-chip .chip-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-pill);
+  background: #E5F2EC;
+  color: #175D40;
+}
+
+/* --- Detail Multi-Platform Cards --- */
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+  margin: 1.2rem 0;
+}
+
+.platform-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.platform-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.platform-card-desc {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  line-height: 1.35;
+}
+
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: var(--brand);
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s ease;
+  margin-top: 0.3rem;
+}
+
+.btn-primary-action:hover {
+  background: var(--brand-dark);
+  color: #FFFFFF;
+}
+
+.btn-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s ease;
+  margin-top: 0.3rem;
+}
+
+.btn-secondary-action:hover {
+  background: #1D4ED8;
+  color: #FFFFFF;
+}
+
+.prep-intel-box {
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.1rem;
+  margin: 1.2rem 0;
+}
+
+.prep-intel-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0369A1;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.prep-intel-strategy {
+  font-size: 0.84rem;
+  color: #0C4A6E;
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
+}
+
+.prep-intel-links {
+  font-size: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prep-intel-links a {
+  color: #0284C7;
+  text-decoration: underline;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .bubble { transition: background 0.3s ease; }
 }

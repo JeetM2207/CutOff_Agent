@@ -134,6 +134,7 @@ def _worker_loop(settings: Settings, adapters: AppAdapters) -> None:
 
     while not _stop_event.is_set():
         try:
+            ctx.master_profile = _load_master_profile(settings)
             profile = adapters.sheets.read_profile()
             policy = adapters.sheets.read_policy()
             now = datetime.now(timezone.utc)

@@ -5,7 +5,7 @@ and llm.form_answer.draft_answers are monkeypatched."""
 from urllib.parse import parse_qs, urlparse
 
 from cutoff.adapters.forms_scrape import FormField
-from cutoff.models import StudentProfile
+from cutoff.models import MasterProfile, ProfileLink, StudentProfile
 from cutoff.pipeline import form_autofill
 
 PROFILE = StudentProfile(
@@ -128,3 +128,60 @@ def test_returns_none_and_does_not_raise_when_llm_call_fails(monkeypatch):
 
     url = form_autofill.build_autofilled_url("https://forms.gle/x", PROFILE, "resume", "jd", **_KWARGS)
     assert url is None
+
+
+def test_fills_phone_and_skills_from_master_profile(monkeypatch):
+    fields = [
+        FormField(entry_id="111", title="Full Name", field_type=0, required=True),
+        FormField(entry_id="222", title="Phone Number", field_type=0, required=True),
+        FormField(entry_id="333", title="Your skills (comma separated)", field_type=0, required=False),
+        FormField(entry_id="444", title="LinkedIn Profile", field_type=0, required=False),
+    ]
+    monkeypatch.setattr(form_autofill, "fetch_form_page", lambda url: ("https://docs.google.com/forms/d/e/X/viewform", "<html/>"))
+    monkeypatch.setattr(form_autofill, "parse_form_fields", lambda html: fields)
+
+    mp = MasterProfile(
+        phone="+91-8306610707",
+        skills=["Python", "FastAPI", "PostgreSQL"],
+        links=[ProfileLink(label="LinkedIn", url="https://linkedin.com/in/riyamehta")],
+    )
+
+    url = form_autofill.build_autofilled_url(
+        "https://forms.gle/x", PROFILE, "resume text", "jd text",
+        master_profile=mp, **_KWARGS,
+    )
+    assert url is not None
+    params = parse_qs(urlparse(url).query)
+    assert params["entry.111"] == ["Riya Mehta"]
+    assert params["entry.222"] == ["+91-8306610707"]
+    assert params["entry.333"] == ["Python, FastAPI, PostgreSQL"]
+    assert params["entry.444"] == ["https://linkedin.com/in/riyamehta"]
+
+
+def test_falls_back_to_master_profile_text_when_resume_text_empty(monkeypatch):
+    fields = [
+        FormField(entry_id="555", title="Why should we hire you?", field_type=1, required=False),
+    ]
+    monkeypatch.setattr(form_autofill, "fetch_form_page", lambda url: ("https://docs.google.com/forms/d/e/X/viewform", "<html/>"))
+    monkeypatch.setattr(form_autofill, "parse_form_fields", lambda html: fields)
+
+    captured_resume_text = []
+
+    def fake_draft_answers(resume_text, jd_text, titles, **kwargs):
+        captured_resume_text.append(resume_text)
+        return {"Why should we hire you?": "I have solid Python skills."}
+
+    monkeypatch.setattr("cutoff.llm.form_answer.draft_answers", fake_draft_answers)
+
+    mp = MasterProfile(
+        phone="+91-8306610707",
+        skills=["Python", "PyTorch"],
+    )
+
+    url = form_autofill.build_autofilled_url(
+        "https://forms.gle/x", PROFILE, "", "Looking for Python engineer",
+        master_profile=mp, **_KWARGS,
+    )
+    assert url is not None
+    assert len(captured_resume_text) == 1
+    assert "Python" in captured_resume_text[0]

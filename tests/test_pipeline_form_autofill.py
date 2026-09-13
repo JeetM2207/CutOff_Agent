@@ -111,3 +111,65 @@ def test_default_context_never_attempts_autofill(tmp_path):
     approval_text = next(t for t in sent_texts if "Register?" in t)
 
     assert "TEMPLATE" in approval_text  # falls straight to the stored template, no autofill attempted
+
+
+def test_autofill_uses_generated_resume_local_content(tmp_path):
+    from unittest.mock import patch
+    from cutoff.models import Drive
+    from cutoff.pipeline import resolve
+
+    db_path = str(tmp_path / "cutoff.db")
+    db.init_db(db_path)
+
+    gen_dir = tmp_path / "gen_resumes"
+    gen_dir.mkdir()
+    pdf_file = gen_dir / "gen123.pdf"
+    pdf_file.write_bytes(b"%PDF-1.4 test resume content")
+
+    mail = FakeMailSource()
+    calendar = FakeCalendarStore()
+    messenger = FakeMessenger()
+    files = FakeFileStore([])  # empty files store; calling get_resume_content would fail!
+
+    captured = {}
+
+    def stub_autofill(form_url, profile, resume_text, jd_text, **kwargs):
+        captured["resume_text"] = resume_text
+        captured["master_profile"] = kwargs.get("master_profile")
+        return "https://docs.google.com/forms/d/e/AUTOFILLED/viewform?entry.1=ok"
+
+    ctx = run.PipelineContext(
+        mail=mail, files=files, extract_fn=_stub_extract, api_key="unused", model="stub",
+        timezone_name="Asia/Kolkata", db_path=db_path, use_llm_cache=False, calendar=calendar,
+        sheets=FakeSheetStore(PROFILE, POLICY),
+        autofill_form_fn=stub_autofill,
+        generated_resume_dir=str(gen_dir),
+    )
+
+    drive = Drive(
+        drive_id="northwind-systems:software-engineer:2026",
+        company="Northwind Systems",
+        role="Software Engineer",
+        batch_year=2026,
+        status="OPEN",
+        form_url="https://forms.gle/northwindSDE",
+        resolved_resume_pick={
+            "resolved": True,
+            "file_id": "generated:gen123.pdf",
+            "name": "gen123.pdf",
+            "web_view_link": "http://localhost/gen123.pdf",
+            "reason": "Tailored",
+        },
+    )
+    resolve.save_drive(db_path, drive)
+
+    msg = EmailMessage(
+        message_id="m1", thread_id="t1", from_addr="Career Office <careers.demo.college@gmail.com>",
+        subject="Campus Drive: Northwind Systems - Software Engineer",
+        body_text="CGPA 7.0 and above. CSE. Apply: https://forms.gle/northwindSDE", received_at=NOW,
+    )
+
+    with patch("cutoff.pipeline.ingest.extract_pdf_text", return_value="Extracted PDF Text"):
+        run.process_message(msg, ctx, profile=PROFILE, policy=POLICY, now=NOW)
+
+    assert captured.get("resume_text") == "Extracted PDF Text"

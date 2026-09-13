@@ -275,19 +275,38 @@ class TelegramBotLoop:
         if not drive.form_url or self._settings is None:
             return None
         try:
+            from pathlib import Path
             from cutoff.pipeline import form_autofill, ingest
+            from cutoff.pipeline.master_profile import load_master_profile
+
+            master_profile = None
+            if self._settings.master_profile_path:
+                try:
+                    master_profile = load_master_profile(self._settings.master_profile_path)
+                except Exception:
+                    master_profile = None
 
             resume_text = ""
-            if resume_file is not None and self._adapters.files is not None:
-                ok, data, err = executor.with_retry(lambda: self._adapters.files.get_resume_content(resume_file.file_id))
-                if ok:
-                    try:
-                        resume_text = ingest.extract_pdf_text(data)
-                    except Exception:
-                        resume_text = ""
+            if resume_file is not None:
+                if resume_file.file_id and resume_file.file_id.startswith("generated:"):
+                    filename = resume_file.file_id.split("generated:", 1)[1]
+                    local_path = Path(self._settings.generated_resume_dir) / filename
+                    if local_path.exists():
+                        try:
+                            resume_text = ingest.extract_pdf_text(local_path.read_bytes())
+                        except Exception:
+                            resume_text = ""
+                elif self._adapters.files is not None:
+                    ok, data, err = executor.with_retry(lambda: self._adapters.files.get_resume_content(resume_file.file_id))
+                    if ok:
+                        try:
+                            resume_text = ingest.extract_pdf_text(data)
+                        except Exception:
+                            resume_text = ""
             autofilled = form_autofill.build_autofilled_url(
                 drive.form_url, profile, resume_text, drive.jd_text or "",
                 resume_link=(resume_file.web_view_link if resume_file else None),
+                master_profile=master_profile,
                 api_key=self._settings.llm_api_key, model=self._settings.llm_model,
                 provider=self._settings.llm_provider, base_url=self._settings.llm_base_url,
             )

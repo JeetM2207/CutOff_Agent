@@ -6,6 +6,7 @@ import sqlite3
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Callable
 
 from cutoff import db, trace
@@ -92,15 +93,24 @@ def _mark_processed(db_path: str, message_id: str, run_id: str) -> bool:
         return False
 
 
+def _unmark_processed(db_path: str, message_id: str) -> None:
+    """If an unhandled exception escapes process_message, remove the mark so
+    the message is retried on the next poll instead of permanently dropped."""
+    conn = db.get_connection(db_path)
+    conn.execute("DELETE FROM processed_messages WHERE message_id = ?", (message_id,))
+    conn.commit()
+
+
 def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: StudentProfile,
                      policy: CollegePolicy, now: datetime) -> RunResult:
     run_id = uuid.uuid4().hex
     trace.configure(ctx.db_path)
-    with trace.run(run_id):
-        with trace.span("ingest", message_id=msg.message_id):
-            if not _mark_processed(ctx.db_path, msg.message_id, run_id):
-                return RunResult(run_id, msg.message_id, None, None, None, 0, "duplicate message_id: no-op")
-            ingested = ingest.ingest(msg, ctx.mail)
+    try:
+        with trace.run(run_id):
+            with trace.span("ingest", message_id=msg.message_id):
+                if not _mark_processed(ctx.db_path, msg.message_id, run_id):
+                    return RunResult(run_id, msg.message_id, None, None, None, 0, "duplicate message_id: no-op")
+                ingested = ingest.ingest(msg, ctx.mail)
 
         with trace.span("security", from_addr=msg.from_addr):
             allowed, sender_signals = security.check_sender(msg.from_addr, policy)
@@ -262,6 +272,15 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
                         )
                         resolve.save_drive(ctx.db_path, drive)
 
+                mp = ctx.master_profile
+                if mp is None and ctx.generated_resume_dir:
+                    try:
+                        from cutoff.config import get_settings
+                        from cutoff.pipeline.master_profile import load_master_profile
+                        mp = load_master_profile(get_settings().master_profile_path)
+                    except Exception:
+                        mp = None
+
                 if drive.resolved_resume_pick is not None:
                     # The student already answered "use mine / generate one"
                     # for this drive (possibly on an earlier revision) --
@@ -276,7 +295,7 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
                         if pick.get("file_id") else None
                     )
                     resume_reason = pick.get("reason")
-                elif ctx.master_profile is not None and ctx.generated_resume_dir:
+                elif mp is not None and ctx.generated_resume_dir:
                     # Dynamic generation is configured but this drive's
                     # resume question hasn't been answered yet -- ask,
                     # never silently decide (Section 6.4's explicit runtime
@@ -285,28 +304,41 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
                     resume_file, resume_reason = None, None
                     needs_resume_choice = True
                 else:
-                    resume_file, resume_reason = resume_mod.select_resume_smart(
-                        drive.role_category, ingested.attachment_text, ctx.files,
-                        api_key=ctx.api_key, model=ctx.model, provider=ctx.provider,
-                        base_url=ctx.base_url, db_path=ctx.db_path,
-                    )
+                    try:
+                        resume_file, resume_reason = resume_mod.select_resume_smart(
+                            drive.role_category, ingested.attachment_text, ctx.files,
+                            api_key=ctx.api_key, model=ctx.model, provider=ctx.provider,
+                            base_url=ctx.base_url, db_path=ctx.db_path,
+                        )
+                    except Exception:
+                        resume_file, resume_reason = resume_mod.select_resume(drive.role_category, ctx.files), None
 
                 autofilled_url = None
                 if not needs_resume_choice and ctx.autofill_form_fn is not None and drive.form_url:
                     resume_text = ""
                     if resume_file is not None:
-                        ok, data, err = executor.with_retry(
-                            lambda: ctx.files.get_resume_content(resume_file.file_id)
-                        )
-                        if ok:
-                            try:
-                                resume_text = ingest.extract_pdf_text(data)
-                            except Exception:
-                                resume_text = ""
+                        if resume_file.file_id and resume_file.file_id.startswith("generated:"):
+                            fname = resume_file.file_id.split("generated:", 1)[1]
+                            local_p = Path(ctx.generated_resume_dir or "generated_resumes") / fname
+                            if local_p.exists():
+                                try:
+                                    resume_text = ingest.extract_pdf_text(local_p.read_bytes())
+                                except Exception:
+                                    resume_text = ""
+                        elif ctx.files is not None:
+                            ok, data, err = executor.with_retry(
+                                lambda: ctx.files.get_resume_content(resume_file.file_id)
+                            )
+                            if ok:
+                                try:
+                                    resume_text = ingest.extract_pdf_text(data)
+                                except Exception:
+                                    resume_text = ""
                     try:
                         autofilled_url = ctx.autofill_form_fn(
                             drive.form_url, profile, resume_text, ingested.attachment_text,
                             resume_link=(resume_file.web_view_link if resume_file else None),
+                            master_profile=mp,
                             api_key=ctx.api_key, model=ctx.model, provider=ctx.provider, base_url=ctx.base_url,
                         )
                     except Exception:
@@ -330,5 +362,8 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
                 needs_resume_choice=needs_resume_choice,
             )
 
-    return RunResult(run_id, msg.message_id, notice.notice_type, drive.drive_id, verdict.result,
-                      len(actions), "ok", unverified_fields=notice.unverified_fields)
+        return RunResult(run_id, msg.message_id, notice.notice_type, drive.drive_id, verdict.result,
+                          len(actions), "ok", unverified_fields=notice.unverified_fields)
+    except Exception:
+        _unmark_processed(ctx.db_path, msg.message_id)
+        raise

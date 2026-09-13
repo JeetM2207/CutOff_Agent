@@ -21,7 +21,7 @@ import logging
 from urllib.parse import urlencode
 
 from cutoff.adapters.forms_scrape import FILLABLE_TYPES, fetch_form_page, parse_form_fields
-from cutoff.models import StudentProfile
+from cutoff.models import MasterProfile, StudentProfile
 
 logger = logging.getLogger("cutoff.form_autofill")
 
@@ -30,7 +30,10 @@ _FIELD_KEYWORDS: list[tuple[str, str]] = [
     ("full name", "name"), ("name", "name"),
     ("branch", "branch"), ("department", "branch"), ("stream", "branch"),
     ("e-mail", "email"), ("email", "email"),
+    ("phone", "phone"), ("mobile", "phone"), ("contact", "phone"), ("whatsapp", "phone"), ("cell", "phone"),
     ("cgpa", "gpa"), ("gpa", "gpa"), ("grade", "gpa"),
+    ("skill", "skills"), ("tech stack", "skills"), ("technologies", "skills"),
+    ("linkedin", "linkedin"), ("github", "github"), ("portfolio", "portfolio"), ("website", "portfolio"),
 ]
 
 # Checked before profile-field keywords and before the LLM fallback: a
@@ -50,9 +53,28 @@ def _match_profile_field(title: str) -> str | None:
     return None
 
 
+def _master_profile_to_text(mp: MasterProfile) -> str:
+    lines = []
+    if mp.phone:
+        lines.append(f"Phone: {mp.phone}")
+    if mp.skills:
+        lines.append(f"Technical Skills: {', '.join(mp.skills)}")
+    for p in mp.projects:
+        tech = f" ({', '.join(p.tech_stack)})" if p.tech_stack else ""
+        lines.append(f"Project: {p.title}{tech}\n" + "\n".join(p.bullets))
+    for e in mp.experience:
+        lines.append(f"Experience: {e.title}\n" + "\n".join(e.bullets))
+    for edu in mp.education:
+        lines.append(f"Education: {edu.degree} from {edu.institution} (CGPA: {edu.cgpa or ''})")
+    if mp.achievements:
+        lines.append("Achievements: " + "; ".join(mp.achievements))
+    return "\n\n".join(lines)
+
+
 def build_autofilled_url(
     form_url: str, profile: StudentProfile, resume_text: str, jd_text: str,
-    *, resume_link: str | None = None, api_key: str, model: str, provider: str, base_url: str | None,
+    *, resume_link: str | None = None, master_profile: MasterProfile | None = None,
+    api_key: str, model: str, provider: str, base_url: str | None,
 ) -> str | None:
     if not form_url:
         return None
@@ -65,6 +87,9 @@ def build_autofilled_url(
         if not fields:
             return None
 
+        if not resume_text.strip() and master_profile is not None:
+            resume_text = _master_profile_to_text(master_profile)
+
         entries: dict[str, str] = {}
         open_questions: list[tuple[str, str]] = []  # (title, entry_id)
         for f in fields:
@@ -73,10 +98,24 @@ def build_autofilled_url(
                 entries[f"entry.{f.entry_id}"] = resume_link
                 continue
             profile_field = _match_profile_field(f.title)
-            value = getattr(profile, profile_field, None) if profile_field else None
+            value = None
+            if profile_field == "phone":
+                value = getattr(profile, "phone", None) or (master_profile.phone if master_profile else None)
+            elif profile_field == "skills":
+                if master_profile and master_profile.skills:
+                    value = ", ".join(master_profile.skills)
+            elif profile_field in ("linkedin", "github", "portfolio", "website"):
+                if master_profile:
+                    for link in master_profile.links:
+                        if profile_field in link.label.lower() or profile_field in link.url.lower():
+                            value = link.url
+                            break
+            elif profile_field:
+                value = getattr(profile, profile_field, None)
+
             if value is not None:
                 entries[f"entry.{f.entry_id}"] = str(value)
-            elif profile_field is None:
+            else:
                 open_questions.append((f.title, f.entry_id))
 
         if open_questions and resume_text.strip():

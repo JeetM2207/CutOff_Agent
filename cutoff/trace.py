@@ -65,14 +65,15 @@ def span(name: str, **attrs):
     status = "ok"
     try:
         yield span_id
-    except Exception:
+    except Exception as exc:
         status = "error"
+        attrs["error"] = f"{type(exc).__name__}: {exc}"
         raise
     finally:
         _current_span_id.reset(token)
         conn.execute(
-            "UPDATE traces SET ended_at = ?, status = ? WHERE run_id = ? AND span_id = ?",
-            (_now(), status, run_id, span_id),
+            "UPDATE traces SET ended_at = ?, status = ?, attrs = ? WHERE run_id = ? AND span_id = ?",
+            (_now(), status, json.dumps(attrs, default=str), run_id, span_id),
         )
         conn.commit()
 
