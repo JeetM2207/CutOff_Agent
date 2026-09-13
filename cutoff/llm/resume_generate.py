@@ -27,8 +27,11 @@ def _tool_schema(skills: list[str], project_titles: list[str]) -> dict:
             "headline": {
                 "type": "string",
                 "description": (
-                    "A one-line professional headline summarizing the student for this specific job "
-                    "description, grounded only in what's in the master profile below."
+                    "A 2-3 sentence Professional Summary (like the opening paragraph of a real resume), "
+                    "positioning the student for this specific job description. Grounded ONLY in what's "
+                    "in the master profile below — describe the student's real background/specialization "
+                    "and what they're seeking, using their actual skills and domains, never a claim or "
+                    "qualification that isn't supported by the master profile."
                 ),
             },
             "skills": {

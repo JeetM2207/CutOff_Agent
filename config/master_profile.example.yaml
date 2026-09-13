@@ -44,8 +44,12 @@ projects:
     bullets:
       - "What it does, in one line."
       - "Your specific contribution, with a real, measurable outcome if you have one."
-    link: ""  # optional — GitHub repo or live demo URL
-  # repeat for every real project you have
+    link: ""  # optional — the project's repo (e.g. GitHub) URL
+    demo_link: ""  # optional — a live/hosted demo URL, shown alongside `link` as "Live Demo | GitHub"
+  # repeat for every real project you have -- the LLM picks 2-4 of THESE per
+  # job description (never invents one), so listing every real project you
+  # have, not just your favorites, is what lets it actually pick the right
+  # one for each drive instead of always showing the same ones
 
 experience:
   # always shown in full on the generated resume, never filtered by the LLM

@@ -394,6 +394,32 @@ real LLM (TCS / Software Engineer): 5 real results, a grounded 2-sentence summar
 genuinely among the real results. 27 new tests, every external boundary stubbed. Full suite: 358/358
 passing (331 prior + 27 new).
 
+## The first real end-to-end run: a data bug, a template rebuild, and proof the logic already worked
+
+The user's first full live test reported the generated resume as "worst than ever," prep intel never
+appearing, and onboarding seeming to do nothing. All three traced to something other than the tailoring
+logic itself:
+
+- **Root cause of the bad resume**: `config/master_profile.yaml` still held demo test data ("Riya Mehta")
+  from earlier in this session — gitignored, so invisible in any diff, but still real data on disk. Every
+  generation was mixing the user's real name with someone else's fake projects. Deleted; onboarding is
+  user-initiated (`/onboard`/`/sync`/sending a resume PDF) and simply hadn't been run yet.
+- **The template itself**, independent of the data problem: rebuilt `resume_pdf.py` directly against a
+  real, working LaTeX resume the user supplied as reference — centered header with real clickable link
+  annotations (not printed URLs), a "Professional Summary" paragraph (widened from a one-line headline),
+  a Projects section with a "Live Demo | GitHub" link line (new `MasterProfileProject.demo_link` field)
+  and italic tech-stack line, bold section headings with a rule underneath.
+- **Verified the tailoring logic was already correct**, once given real data: built a `MasterProfile` from
+  the user's own real projects and ran two different job descriptions (GenAI/LLM vs. classic data/CV)
+  through the real pipeline. Each correctly selected the 2 relevant projects and dropped the other 2,
+  with skills correctly reordered to match each JD — exactly the "drop the unnecessary project, pick the
+  one the company actually asked for" behavior requested. The logic needed no changes; only real data and
+  a better template.
+- Also reconfirmed directly: `.env` changes (e.g. `ENABLE_PREP_INTEL`) only take effect after a full
+  restart of `python -m cutoff.main` — `PipelineContext` is built once at worker-thread startup.
+
+2 tests updated for the new link-annotation/Professional Summary behavior. Full suite: 360/360.
+
 ## Known limitations
 
 - `list_suspicious`'s reach is bounded by `SUSPICIOUS_QUERY_KEYWORDS` — a fixed phrase list. A

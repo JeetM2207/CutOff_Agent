@@ -1547,3 +1547,53 @@ object" down through `plan()`.
 `test_planner_intel.py`, `test_run_prep_intel.py`) — every external boundary (ddgs, the LLM) stubbed, plus
 two live verifications (real search, real synthesis) fully isolated from any Gmail/Sheets/Calendar/
 Telegram account. Full suite: 358/358 passing (331 prior + 27 new, zero regressions).
+
+## First real end-to-end test: a root cause, a template rebuild, and proof the tailoring logic already worked
+
+User ran the full real flow for the first time and reported "nothing works at all" — the generated resume
+was "worst than ever," prep intel never showed up, and onboarding seemed like it hadn't done anything.
+Investigated each complaint rather than guessing.
+
+**Root cause of the bad resume, found immediately:** `config/master_profile.yaml` still held the *demo*
+profile ("Riya Mehta," fake Django projects) I'd created for my own testing earlier in this session. It's
+gitignored, so it never showed up in any diff, but it was still sitting on disk — meaning every real
+generation was silently mixing the user's real name (from their real StudentProfile) with someone else's
+fake projects. Deleted it immediately. This also explains "it hasn't asked me for my resume/GitHub/
+LinkedIn": onboarding is user-initiated (`/onboard`, `/sync`, or sending a resume PDF) — it doesn't run
+itself, and the user hadn't triggered it yet, so there was no real profile at all until now.
+
+**The resume looking bad, independent of the data problem:** the user shared their own real, working
+LaTeX resume as a reference and asked for the same look — centered header with hyperlinked contact/links,
+a "Professional Summary" paragraph, a flat Technical Skills line, a Projects section with a
+"Live Demo | GitHub" link line and italic tech-stack line, Education, Achievements. The prior
+`resume_pdf.py` layout was left-aligned, had no real hyperlinks (URLs printed as plain text), and used a
+one-line "headline" instead of a real summary paragraph — a working template, but nowhere near this
+polish. Rebuilt it directly against the reference:
+
+- Centered name/contact header with **real clickable link annotations** (`canvas.linkURL`) on email and
+  every GitHub/LinkedIn/portfolio link — not just plain printed URLs.
+- New "Professional Summary" section: widened `resume_generate.py`'s `headline` field from "one line" to
+  "2-3 sentences, like a resume's opening paragraph" — still grounded only in the master profile, same
+  schema-enforced discipline as before.
+- Projects now show a real "Live Demo | GitHub" clickable link line (new `MasterProfileProject.demo_link`
+  field, alongside the existing `link`) plus an italic Tech Stack line, matching the reference exactly.
+- Section headings are bold with a thin rule underneath, mirroring the reference's `\titleformat{\section}`
+  style as closely as reportlab's plain-canvas API allows.
+
+**Verified the tailoring logic itself was already correct — the problem was only ever data + visuals.**
+Built a `MasterProfile` from the user's own real project content (four real projects: an SMS-fraud LLM
+system, a legal-RAG system, a YOLOv8 retail-detection project, a cricket-score predictor) and ran two
+different job descriptions through the real pipeline: a GenAI/LLM role and a classic data/CV role. The
+GenAI JD correctly selected the LLM-relevant projects (SMS-fraud detector, legal RAG) and dropped the
+unrelated ones; the data/CV JD picked the exact opposite two. Skills were correctly filtered and
+reordered to match each JD's own terminology in both cases. This is exactly the "remove the unnecessary
+project, add the one the company actually asked for" behavior the user wanted — it was already built and
+working; it just had no real data to work with and an unpolished template to render into.
+
+**Also re-confirmed directly** (not just asserted): `ENABLE_PREP_INTEL` and any other `.env` setting only
+takes effect after a full restart of `python -m cutoff.main` — `PipelineContext` is built once at worker-
+thread startup from whatever `.env` said at that moment. If prep intel still doesn't show after setting
+`ENABLE_PREP_INTEL=1`, an unrestarted process is the first thing to check, not a code bug.
+
+2 new/updated `test_resume_pdf.py` tests for the new link-annotation and Professional Summary behavior.
+Full suite: 360/360 passing.

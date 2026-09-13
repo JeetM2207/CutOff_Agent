@@ -93,7 +93,9 @@ def test_render_resume_pdf_shows_education_experience_achievements_deterministic
     assert "Demo College" in text
     assert "Backend Intern" in text
     assert "Runner-up" in text
-    assert "github.com/riya" in text
+    assert "GitHub" in text  # the link's label is the clickable text, not the raw URL (see below)
+    # the real URL is embedded as a link annotation, not printed as text -- confirm it's genuinely there
+    assert "github.com/riya" in pdf_bytes.decode("latin-1")
 
 
 def test_render_resume_pdf_project_link_and_tech_stack_come_from_master_profile_not_llm():
@@ -102,4 +104,26 @@ def test_render_resume_pdf_project_link_and_tech_stack_come_from_master_profile_
     pdf_bytes = render_resume_pdf(_sections(), student_profile=STUDENT, master_profile=_master())
     text = _extract_text(pdf_bytes)
     assert "PostgreSQL" in text
-    assert "order-service" in text
+    assert "GitHub" in text  # the project's link line
+    assert "order-service" in pdf_bytes.decode("latin-1")  # the real repo URL, embedded as a link annotation
+
+
+def test_render_resume_pdf_shows_live_demo_link_alongside_github():
+    master = _master(projects=[MasterProfileProject(
+        title="Order Service", tech_stack=["Django"], bullets=["Built a Django REST API."],
+        link="https://github.com/riya/order-service", demo_link="https://order-service.demo",
+    )])
+    pdf_bytes = render_resume_pdf(_sections(), student_profile=STUDENT, master_profile=master)
+    text = _extract_text(pdf_bytes)
+    assert "Live Demo" in text
+    assert "GitHub" in text
+    raw = pdf_bytes.decode("latin-1")
+    assert "order-service.demo" in raw
+    assert "github.com/riya/order-service" in raw
+
+
+def test_render_resume_pdf_professional_summary_heading_present():
+    pdf_bytes = render_resume_pdf(_sections(), student_profile=STUDENT, master_profile=_master())
+    text = _extract_text(pdf_bytes)
+    assert "Professional Summary" in text
+    assert "Backend-focused CSE student experienced with Django and PostgreSQL." in text

@@ -161,7 +161,8 @@ class MasterProfileProject(BaseModel):
     title: str
     tech_stack: list[str] = Field(default_factory=list)
     bullets: list[str]
-    link: str | None = None  # e.g. a GitHub repo or live demo URL
+    link: str | None = None  # the project's repo (e.g. GitHub) URL
+    demo_link: str | None = None  # a live/hosted demo URL, shown alongside `link` if present
 
 
 class MasterProfileExperience(BaseModel):
