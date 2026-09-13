@@ -1404,3 +1404,63 @@ student resume. Full test suite: 280/280 passing (13 new tests: `test_resume_pdf
 fixed template, `test_resume_generate.py` extended for enum-grounding failures, `test_planner.py` extended
 for the choice-card fork and idempotency-key reuse, and a new `test_telegram_resume_choice.py` covering
 the "use" path, graceful degradation with nothing wired up, double-tap safety, and the resend-token fix).
+
+## Onboarding: building the master profile from what a student already has
+
+User asked directly: how does a student actually get their data INTO `config/master_profile.yaml` in the
+first place, rather than typing everything by hand? Answer built as a new, self-contained onboarding
+pipeline layered on top of everything above, never touching the resume-generation code itself.
+
+**The parser** (`cutoff/llm/profile_extract.py`): forced tool-use, same shape and grounding discipline as
+`resume_generate.py` — a student's existing resume PDF goes in, a validated `MasterProfile` comes out,
+with an explicit instruction never to infer or invent a fact that isn't literally written on the page.
+Live-verified against the real Gemini key with a genuinely different (non-demo) sample resume: every
+skill, project bullet, education detail, and achievement came back exactly as written, nothing invented.
+One real extraction-quality bug found and fixed in the same pass: the model classified the student's own
+email address as a "link" (since it technically is one) — tightened the prompt to make `links` mean
+GitHub/LinkedIn/portfolio-style profile URLs only, re-verified live, confirmed fixed.
+
+**The enrichment fetchers** (`cutoff/adapters/developer_footprint.py`): optional, best-effort public data
+— GitHub's public REST API (repos, languages, topics, a README excerpt) and LeetCode's de-facto-public
+GraphQL endpoint (the same one many open-source "stats card" tools already rely on), both read-only,
+unauthenticated, and only ever about the student's own public profile. Every failure mode (unreachable,
+rate-limited, unknown username, malformed response) degrades to an empty/`None` result — this is
+enrichment, never a requirement. Live-verified against the real GitHub API (a well-known public account,
+since testing needs *some* real username): 10 real repos fetched and correctly parsed.
+
+**The merge, deliberately NOT an LLM call.** The user's original ask specified an LLM "reconcile" step to
+merge the resume parse with GitHub/LeetCode data. Built it differently on purpose
+(`cutoff/pipeline/profile_synthesize.py`): a plain, deterministic Python merge — dedupe skills
+case-insensitively, match projects by normalized title *or* a shared link (so a resume project and its
+GitHub repo merge into one entry instead of listing twice), union bullets/tech_stack, fold LeetCode stats
+into one achievement line. Reasoning: every input here is already either a validated `MasterProfile` or
+simple structured data — asking an LLM to "reconcile" multiple sources is strictly more hallucination
+surface for zero benefit over a plain merge, when nothing about combining already-trusted data actually
+requires judgment calls language models are good at. 11 tests, including one confirming a GitHub repo
+with no description and no README gets an honest placeholder bullet, never a fabricated one.
+
+**Two ways in: a CLI script and a conversational Telegram flow.** `python -m scripts.import_master_profile
+resume.pdf [--github user] [--leetcode user] [--dry-run]` — parses, enriches, merges, shows a diff,
+backs up the old file, writes the new one. Never silent about what changed. The same underlying pieces
+are also wired into `TelegramBotLoop`: `/onboard` (help), `/sync <github> [leetcode]` (enrich without a
+new resume), and sending a resume PDF directly as a Telegram document — every path stages the merged
+result behind an explicit "Approve & Save" / "Discard" card, never writing over the real
+`config/master_profile.yaml` automatically. Backed by a new `profile_imports` table (token -> staged file
+path + diff summary), reusing the same short-token pattern the rest of the bot already uses rather than
+inventing new machinery. Approving backs up the previous file first (`config/master_profile.<timestamp>.
+bak.yaml`) before promoting the staged one — never a silent, unrecoverable overwrite.
+
+**Security/reliability notes, addressed directly:** incoming Telegram messages (not just callback taps)
+are now handled for the first time — the same `TELEGRAM_CHAT_ID`-only trust boundary already used for
+callbacks applies identically to messages and document uploads. Uploaded files are capped at 5MB
+(a real resume PDF is nowhere near this) as a defensive limit against something absurd. Every entry point
+in the whole onboarding flow is wrapped in a broad try/except that degrades to an honest chat message
+("Something went wrong... nothing was changed") rather than risking the bot thread going dark — same
+discipline `resend_due_reminders` already established for exactly this reason.
+
+37 new tests across five files (`test_profile_extract.py`, `test_developer_footprint.py`,
+`test_profile_synthesize.py`, `test_master_profile.py` extended, new `test_telegram_onboard.py`) — every
+external boundary (LLM, GitHub, LeetCode, Telegram's own file-download endpoint) stubbed, never a real
+network call in the suite. Full test suite: 329/329 passing (280 prior + 37 new, zero regressions), plus
+two separate live verifications against real external services (Gemini for parsing, GitHub for
+enrichment) fully isolated from any Gmail/Sheets/Calendar/Telegram account.

@@ -29,7 +29,7 @@ from cutoff.models import (
 
 EXPECTED_TABLES = {
     "processed_messages", "drives", "drive_history",
-    "actions", "approvals", "traces", "llm_cache",
+    "actions", "approvals", "traces", "llm_cache", "profile_imports",
 }
 
 

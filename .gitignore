@@ -8,6 +8,8 @@ cutoff.db-shm
 traces.jsonl
 generated_resumes/
 config/master_profile.yaml
+config/.staged_*.yaml
+config/master_profile.*.bak.yaml
 *.log
 .venv/
 __pycache__/

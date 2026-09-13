@@ -78,6 +78,17 @@ CREATE TABLE IF NOT EXISTS llm_cache (
     model       TEXT NOT NULL,
     response    TEXT NOT NULL   -- JSON
 );
+
+-- Section 6.4 onboarding extension: a parsed/enriched master profile staged
+-- for review (via Telegram's /onboard document upload or /sync command)
+-- before it's ever written over the real config/master_profile.yaml. Never
+-- promoted automatically -- only on an explicit "Approve & Save" tap.
+CREATE TABLE IF NOT EXISTS profile_imports (
+    token        TEXT PRIMARY KEY,
+    staged_path  TEXT NOT NULL,
+    diff_summary TEXT NOT NULL,
+    created_at   TEXT NOT NULL
+);
 """
 
 _local = threading.local()

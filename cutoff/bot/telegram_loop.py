@@ -1,18 +1,22 @@
 """Long-polling Telegram bot loop (Section 6.5): getUpdates -> callback_query
-dispatch. Only accepts callbacks from TELEGRAM_CHAT_ID. Registration is the
-one T2 action (Section 11.2) — the agent never submits the form; tapping
-"Mark submitted" is the human's own confirmation that they did."""
+dispatch, plus (Section 6.4 onboarding extension) incoming message handling
+for /onboard, /sync, and resume-PDF uploads. Only accepts callbacks and
+messages from TELEGRAM_CHAT_ID. Registration is the one T2 action (Section
+11.2) — the agent never submits the form; tapping "Mark submitted" is the
+human's own confirmation that they did."""
 from __future__ import annotations
 
 import json
 import logging
+import shutil
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
 
 from cutoff import db, trace
-from cutoff.models import Action, ResumeFile
+from cutoff.models import Action, Button, ResumeFile
 from cutoff.pipeline import executor, planner, resolve
 from cutoff.pipeline import resume as resume_mod
 from cutoff.pipeline.executor import Adapters
@@ -20,10 +24,21 @@ from cutoff.pipeline.executor import Adapters
 logger = logging.getLogger("cutoff.bot")
 
 POLL_TIMEOUT = 25
+MAX_DOCUMENT_BYTES = 5 * 1024 * 1024  # a resume PDF is realistically well under this
+
+_ONBOARD_HELP = (
+    "Send me your existing resume as a PDF and I'll extract your skills, projects, education, and "
+    "achievements into your master profile (used for tailored resume generation).\n\n"
+    "You can also run:\n"
+    "/sync <github_username> [leetcode_username]\n"
+    "to pull in your public GitHub repos and/or LeetCode stats without a new resume upload.\n\n"
+    "Nothing is saved until you approve the preview I send back."
+)
 
 
 class TelegramBotLoop:
     def __init__(self, bot_token: str, chat_id: str, db_path: str, adapters: Adapters, *, settings=None):
+        self._bot_token = bot_token
         self._base = f"https://api.telegram.org/bot{bot_token}"
         self._chat_id = str(chat_id)
         self._db_path = db_path
@@ -63,6 +78,10 @@ class TelegramBotLoop:
             cq = update.get("callback_query")
             if cq:
                 self._handle_callback(cq)
+                continue
+            message = update.get("message")
+            if message:
+                self._handle_message(message)
 
     # --- dispatch -----------------------------------------------------------
 
@@ -87,6 +106,9 @@ class TelegramBotLoop:
             kind, token, action = parts
             if kind == "m":
                 self.handle_mark_submitted(token)
+                return
+            if kind == "o":
+                self._handle_onboard_callback(token, action)
                 return
             approval = self._get_approval(token)
             if approval is None:
@@ -292,6 +314,144 @@ class TelegramBotLoop:
         conn = db.get_connection(self._db_path)
         row = conn.execute("SELECT idempotency_key FROM actions WHERE action_id = ?", (action_id,)).fetchone()
         return bool(row) and not row["idempotency_key"].endswith(":main")
+
+    # --- onboarding (/onboard, /sync, resume upload) --------------------------
+    # Section 6.4 onboarding extension: builds config/master_profile.yaml from
+    # a resume the student already has (cutoff.llm.profile_extract), plus
+    # optional public GitHub/LeetCode enrichment
+    # (cutoff.adapters.developer_footprint), merged deterministically
+    # (cutoff.pipeline.profile_synthesize) — but NEVER written until the
+    # student explicitly taps "Approve & Save" on a preview. A bug anywhere
+    # in this whole flow must never take down message polling itself, same
+    # discipline as resend_due_reminders — every entry point below is
+    # wrapped in a broad try/except that degrades to an honest chat message.
+
+    def _handle_message(self, message: dict) -> None:
+        chat_id = str(message.get("chat", {}).get("id", ""))
+        if chat_id != self._chat_id:
+            return  # Section 6.5: only TELEGRAM_CHAT_ID is trusted, same as callbacks
+        try:
+            text = (message.get("text") or "").strip()
+            if text == "/onboard" or text.startswith("/onboard "):
+                self._send_plain(_ONBOARD_HELP)
+            elif text.startswith("/sync"):
+                self._handle_sync_command(text)
+            elif message.get("document"):
+                self._handle_resume_upload(message["document"])
+        except Exception:
+            logger.exception("handling an incoming Telegram message failed")
+            self._send_plain("Something went wrong handling that — nothing was changed.")
+
+    def _handle_sync_command(self, text: str) -> None:
+        if self._settings is None:
+            self._send_plain("Profile onboarding isn't configured on this instance.")
+            return
+        parts = text.split()[1:]
+        if not parts:
+            self._send_plain("Usage: /sync <github_username> [leetcode_username]")
+            return
+
+        from cutoff.adapters.developer_footprint import fetch_github_profile, fetch_leetcode_stats
+
+        github_username, leetcode_username = parts[0], (parts[1] if len(parts) > 1 else None)
+        github_data = fetch_github_profile(github_username)
+        leetcode_data = fetch_leetcode_stats(leetcode_username) if leetcode_username else None
+        if not github_data["repos"] and leetcode_data is None:
+            self._send_plain(
+                f"Couldn't find anything public for {github_username!r}"
+                + (f" / {leetcode_username!r}" if leetcode_username else "") + " — nothing was changed."
+            )
+            return
+        self._stage_and_send_preview(github_data=github_data, leetcode_data=leetcode_data)
+
+    def _handle_resume_upload(self, document: dict) -> None:
+        if self._settings is None:
+            self._send_plain("Profile onboarding isn't configured on this instance.")
+            return
+        if (document.get("file_size") or 0) > MAX_DOCUMENT_BYTES:
+            self._send_plain("That file's too large (max 5MB) — please send a smaller PDF.")
+            return
+        if not (document.get("file_name") or "").lower().endswith(".pdf"):
+            self._send_plain("Please send your resume as a PDF.")
+            return
+
+        from cutoff.pipeline.ingest import extract_pdf_text
+        from cutoff.llm.profile_extract import extract_profile_from_resume_text
+
+        pdf_bytes = self._download_file(document["file_id"])
+        resume_text = extract_pdf_text(pdf_bytes)
+        if not resume_text.strip():
+            self._send_plain("Couldn't read any text from that PDF — is it a scanned image?")
+            return
+
+        parsed = extract_profile_from_resume_text(
+            resume_text, api_key=self._settings.llm_api_key, model=self._settings.llm_model,
+            provider=self._settings.llm_provider, base_url=self._settings.llm_base_url, db_path=self._db_path,
+        )
+        self._stage_and_send_preview(parsed_resume=parsed)
+
+    def _download_file(self, file_id: str) -> bytes:
+        resp = httpx.get(f"{self._base}/getFile", params={"file_id": file_id}, timeout=25)
+        resp.raise_for_status()
+        file_path = resp.json()["result"]["file_path"]
+        file_resp = httpx.get(f"https://api.telegram.org/file/bot{self._bot_token}/{file_path}", timeout=25)
+        file_resp.raise_for_status()
+        return file_resp.content
+
+    def _stage_and_send_preview(self, *, parsed_resume=None, github_data=None, leetcode_data=None) -> None:
+        from cutoff.pipeline.master_profile import generate_profile_diff_summary, load_master_profile, save_master_profile
+        from cutoff.pipeline.profile_synthesize import merge_master_profile
+
+        target_path = Path(self._settings.master_profile_path)
+        existing = load_master_profile(target_path)
+        merged = merge_master_profile(
+            existing=existing, parsed_resume=parsed_resume, github_data=github_data, leetcode_data=leetcode_data,
+        )
+        diff_summary = generate_profile_diff_summary(existing, merged)
+        if diff_summary == "No changes.":
+            self._send_plain("No new information found — your master profile is already up to date.")
+            return
+
+        token = executor.new_short_token()
+        staged_path = target_path.parent / f".staged_{token}.yaml"
+        save_master_profile(merged, staged_path)
+        conn = db.get_connection(self._db_path)
+        conn.execute(
+            "INSERT INTO profile_imports (token, staged_path, diff_summary, created_at) VALUES (?, ?, ?, ?)",
+            (token, str(staged_path), diff_summary, datetime.now(timezone.utc).isoformat()),
+        )
+        conn.commit()
+
+        text = f"Here's what I found:\n\n{diff_summary}\n\nSave this to your master profile?"
+        buttons = [Button(text="Approve & Save", callback_data=f"o:{token}:approve"),
+                   Button(text="Discard", callback_data=f"o:{token}:discard")]
+        self._adapters.messenger.send(f"onboard:{token}", text, buttons)
+
+    def _handle_onboard_callback(self, token: str, action: str) -> None:
+        conn = db.get_connection(self._db_path)
+        row = conn.execute("SELECT * FROM profile_imports WHERE token = ?", (token,)).fetchone()
+        if row is None:
+            return  # already resolved (double tap) or an unknown/expired token
+        staged_path = Path(row["staged_path"])
+        conn.execute("DELETE FROM profile_imports WHERE token = ?", (token,))
+        conn.commit()
+
+        if action == "approve" and self._settings is not None and staged_path.exists():
+            from cutoff.pipeline.master_profile import backup_master_profile
+
+            target_path = Path(self._settings.master_profile_path)
+            backup_path = backup_master_profile(target_path)
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(staged_path), str(target_path))
+            note = f" (previous version backed up to {backup_path.name})" if backup_path else ""
+            self._send_plain(f"Master profile updated!{note} Ready for tailored resume generation.")
+        else:
+            if staged_path.exists():
+                staged_path.unlink()
+            self._send_plain("Discarded — your master profile wasn't changed.")
+
+    def _send_plain(self, text: str) -> None:
+        self._adapters.messenger.send("onboard:info", text, None)
 
     # --- question flow (Yes / No / Show email) -------------------------------
 
