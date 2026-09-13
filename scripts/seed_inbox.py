@@ -8,6 +8,9 @@ student account CutOff itself reads from) and saves sender_token.json.
 
     python scripts/seed_inbox.py --to riya@example.com --subject "..." --body "..."
     python scripts/seed_inbox.py --to riya@example.com --preset new_drive
+    python scripts/seed_inbox.py --to riya@example.com --preset new_drive_with_jd  # has a JD PDF attached --
+        # needed to exercise the resume-choice card / dynamic generation / prep intel, since none of those
+        # ever look at the email body, only a PDF attachment (cutoff/pipeline/ingest.py)
 """
 from __future__ import annotations
 
@@ -30,6 +33,32 @@ from cutoff.config import get_settings
 
 SEND_SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 SENDER_TOKEN_FILE = "sender_token.json"
+
+
+def _jd_pdf_bytes() -> bytes:
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    _, height = A4
+    y = height - 60
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, "Meridian Robotics - Backend Software Engineer (2026 Batch)")
+    y -= 30
+    c.setFont("Helvetica", 11)
+    for line in [
+        "Role: Backend Software Engineer", "CTC: 11 LPA", "",
+        "About the role:",
+        "We are looking for a backend engineer with strong hands-on experience in",
+        "Django REST Framework and PostgreSQL. Experience deploying services with",
+        "Docker is required. Familiarity with AWS (EC2 or similar) is a strong plus.",
+        "", "You will be responsible for designing REST APIs, working with relational",
+        "database schemas, and shipping production backend services.", "",
+        "Eligibility: CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.",
+    ]:
+        c.drawString(50, y, line)
+        y -= 18
+    c.showPage()
+    c.save()
+    return buf.getvalue()
 
 
 def _shortlist_pdf_bytes() -> bytes:
@@ -84,6 +113,21 @@ PRESETS = {
             "Eligibility: ECE, EEE only | CGPA 7.0 and above | No active backlogs.\n"
             "Register here: https://forms.gle/demoKestrel by 11:59 PM, tomorrow.\n\nRegards,\nCareer Office"
         ),
+    },
+    "new_drive_with_jd": {
+        # Same drive as "new_drive" but with an actual job-description PDF
+        # attached -- required to exercise the resume-choice card, dynamic
+        # resume generation, and interview-prep intel, since JD text for
+        # all three comes only from a PDF attachment, never the email body
+        # (see cutoff/pipeline/ingest.py).
+        "subject": "Campus Drive: Meridian Robotics - Backend Software Engineer (2026 Batch)",
+        "body": (
+            "Dear Students,\n\nMeridian Robotics is visiting campus for the Backend Software Engineer "
+            "role (CTC 11 LPA). Please find the detailed job description attached.\n\n"
+            "Eligibility: CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.\n"
+            "Register here: https://forms.gle/demoMeridianJD by 11:59 PM, tomorrow.\n\nRegards,\nCareer Office"
+        ),
+        "attachment": ("job_description.pdf", _jd_pdf_bytes),
     },
     "correction": {
         "subject": "Re: Campus Drive: Meridian Robotics - Software Engineer (2026 Batch)",
