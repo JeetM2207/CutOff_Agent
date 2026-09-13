@@ -1458,9 +1458,9 @@ in the whole onboarding flow is wrapped in a broad try/except that degrades to a
 ("Something went wrong... nothing was changed") rather than risking the bot thread going dark — same
 discipline `resend_due_reminders` already established for exactly this reason.
 
-37 new tests across five files (`test_profile_extract.py`, `test_developer_footprint.py`,
+49 new tests across five files (`test_profile_extract.py`, `test_developer_footprint.py`,
 `test_profile_synthesize.py`, `test_master_profile.py` extended, new `test_telegram_onboard.py`) — every
 external boundary (LLM, GitHub, LeetCode, Telegram's own file-download endpoint) stubbed, never a real
-network call in the suite. Full test suite: 329/329 passing (280 prior + 37 new, zero regressions), plus
+network call in the suite. Full test suite: 329/329 passing (280 prior + 49 new, zero regressions), plus
 two separate live verifications against real external services (Gemini for parsing, GitHub for
 enrichment) fully isolated from any Gmail/Sheets/Calendar/Telegram account.

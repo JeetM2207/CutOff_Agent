@@ -357,8 +357,8 @@ entry point degrades to an honest chat message on failure rather than risking th
 Verified live against real external services, fully isolated from any Gmail/Sheets/Calendar/Telegram
 account: a different sample resume parsed with zero fabricated content (one real extraction-quality bug
 found and fixed along the way — the model classified an email address as a "link"; tightened and
-re-verified), and a real public GitHub account's repos fetched and merged correctly. 37 new tests, all
-external boundaries stubbed. Full suite: 329/329 passing.
+re-verified), and a real public GitHub account's repos fetched and merged correctly. 49 new tests, all
+external boundaries stubbed. Full suite: 329/329 passing (280 prior + 49 new).
 
 ## Known limitations
 
