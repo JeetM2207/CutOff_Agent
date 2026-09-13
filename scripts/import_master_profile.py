@@ -22,7 +22,7 @@ from pathlib import Path
 from cutoff.adapters.developer_footprint import fetch_github_profile, fetch_leetcode_stats
 from cutoff.config import get_settings
 from cutoff.llm.profile_extract import extract_profile_from_resume_text
-from cutoff.pipeline.ingest import extract_pdf_text
+from cutoff.pipeline.ingest import extract_pdf_hyperlinks, extract_pdf_text
 from cutoff.pipeline.master_profile import (
     backup_master_profile, generate_profile_diff_summary, load_master_profile, save_master_profile,
 )
@@ -48,11 +48,13 @@ def main() -> None:
     resume_text = extract_pdf_text(resume_bytes)
     if not resume_text.strip():
         raise SystemExit(f"Couldn't extract any text from {args.resume_pdf!r} — is it a scanned image PDF?")
+    hyperlinks = extract_pdf_hyperlinks(resume_bytes)
 
     print(f"Extracting profile from {args.resume_pdf} ...")
     parsed_resume = extract_profile_from_resume_text(
         resume_text, api_key=settings.llm_api_key, model=settings.llm_model,
         provider=settings.llm_provider, base_url=settings.llm_base_url, db_path=settings.db_path,
+        hyperlinks=hyperlinks,
     )
     print(f"  -> {len(parsed_resume.skills)} skills, {len(parsed_resume.projects)} projects, "
           f"{len(parsed_resume.experience)} experience entries, {len(parsed_resume.achievements)} achievements")

@@ -420,6 +420,31 @@ logic itself:
 
 2 tests updated for the new link-annotation/Professional Summary behavior. Full suite: 360/360.
 
+## A real link-extraction bug, found via the user's own live onboarding
+
+A genuine live end-to-end run (real Gmail/Sheets/Calendar/Telegram, two fresh test drives sent via
+`seed_inbox.py`) confirmed the core flow works — both drives correctly judged ELIGIBLE, cards sent and
+`VERIFIED`, each with a real, company-specific prep-intel section. But the user's own onboarding
+(sending their real resume PDF to the bot) surfaced a real bug: every link in their generated
+`config/master_profile.yaml` had its URL set to its own label text (`"GitHub": "GitHub"`).
+
+Root cause: `pdfplumber`'s plain-text extraction only ever returns a PDF hyperlink's *visible* text — for
+a resume project link styled `\href{https://github.com/...}{GitHub}`, the real target URL is never in the
+plain text at all, only in a separate hyperlink-annotation structure `extract_pdf_text` never looked at.
+`profile_extract.py` wasn't grounding incorrectly; it was answering a question with no correct answer
+available in its input. Also found while investigating: `max_tokens=2048` was tight enough to risk
+truncating a real multi-project resume (only 2 of 4 real projects came through) — no schema limit was at
+fault, the response budget was.
+
+Fixed: new `cutoff.pipeline.ingest.extract_pdf_hyperlinks()` reads the PDF's actual hyperlink annotations
+and returns every real URI found, threaded into the extraction prompt as "REAL LINKS FOUND IN THE
+DOCUMENT" with an explicit instruction never to use visible link text as a stand-in for a URL. Both
+callers (the CLI script and the Telegram resume-upload handler) updated; `max_tokens` raised to 4096;
+`MasterProfileProject.demo_link` added to the extraction schema (existed on the model, but the extractor
+never knew to populate it). Verified live against a PDF built to match the user's actual link styling:
+both header contact links and both projects' separate GitHub/Live-Demo links came back correct. 7 new
+tests, 2 existing tests fixed for the new call. Full suite: 367/367.
+
 ## Known limitations
 
 - `list_suspicious`'s reach is bounded by `SUSPICIOUS_QUERY_KEYWORDS` — a fixed phrase list. A

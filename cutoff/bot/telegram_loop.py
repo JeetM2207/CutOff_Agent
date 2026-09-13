@@ -375,7 +375,7 @@ class TelegramBotLoop:
             self._send_plain("Please send your resume as a PDF.")
             return
 
-        from cutoff.pipeline.ingest import extract_pdf_text
+        from cutoff.pipeline.ingest import extract_pdf_hyperlinks, extract_pdf_text
         from cutoff.llm.profile_extract import extract_profile_from_resume_text
 
         pdf_bytes = self._download_file(document["file_id"])
@@ -383,10 +383,12 @@ class TelegramBotLoop:
         if not resume_text.strip():
             self._send_plain("Couldn't read any text from that PDF — is it a scanned image?")
             return
+        hyperlinks = extract_pdf_hyperlinks(pdf_bytes)
 
         parsed = extract_profile_from_resume_text(
             resume_text, api_key=self._settings.llm_api_key, model=self._settings.llm_model,
             provider=self._settings.llm_provider, base_url=self._settings.llm_base_url, db_path=self._db_path,
+            hyperlinks=hyperlinks,
         )
         self._stage_and_send_preview(parsed_resume=parsed)
 

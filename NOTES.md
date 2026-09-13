@@ -1597,3 +1597,46 @@ thread startup from whatever `.env` said at that moment. If prep intel still doe
 
 2 new/updated `test_resume_pdf.py` tests for the new link-annotation and Professional Summary behavior.
 Full suite: 360/360 passing.
+
+## Live end-to-end run on real hardware: a real bug in link extraction, found via the user's own onboarding
+
+Restarted the agent live (killed the user's own `python -m cutoff.main`, which turned out to be running
+against the system/base Python rather than the project's `.venv` — the base env happened to have every
+dependency this session added installed too, so it wasn't broken, but `.venv` is the one actually verified
+throughout this whole session, so restarted with that instead) and re-tested end to end with real Gmail,
+Sheets, Calendar, and Telegram: sent two fresh test drives (Google, then Amazon — real, globally
+recognized companies, per the earlier fix) via `seed_inbox.py`. Both were correctly extracted, judged
+ELIGIBLE, and their Telegram cards were sent and came back `VERIFIED` — including a real, company-specific
+"💡 Prep Strategy" section with real GeeksforGeeks/Glassdoor links for each (confirmed via the trace: the
+full span chain now runs `ingest → ... → eligibility → plan → prep_intel`, not stopping early).
+
+Along the way, the user completed onboarding for real (sent their actual resume PDF to the bot) — and
+their `config/master_profile.yaml` came back with a real, live bug: `links: [{label: "GitHub", url:
+"GitHub"}, {label: "LinkedIn", url: "LinkedIn"}, {label: "Live Demo", url: "Live Demo"}]` — every URL was
+just the literal label text, not a real link. Root cause, confirmed directly: `pdfplumber`'s
+`extract_text()` only ever returns a PDF hyperlink's *visible* clickable text — for a resume project link
+styled `\href{https://github.com/...}{GitHub}` (a generic label, not the URL itself), the real target is
+never in the plain text at all. `cutoff.llm.profile_extract` had no way to know the real URL — it wasn't
+guessing wrong so much as being asked a question with no correct answer available, and it echoed the only
+text it had. Also found while investigating: `max_tokens=2048` was tight enough that a real 4-project
+resume risked truncating (only 2 of 4 real projects came through) — no schema limit was the cause, but the
+response budget was.
+
+Fixed properly: new `cutoff.pipeline.ingest.extract_pdf_hyperlinks()` reads the PDF's actual hyperlink
+annotations (`pdfplumber`'s `page.hyperlinks`, a separate structure from its plain-text extraction) and
+returns every real URI found. Threaded into `profile_extract.py`'s prompt as "REAL LINKS FOUND IN THE
+DOCUMENT," with an explicit instruction to match each one to the right field by context and never fall
+back to using visible link text as if it were a URL. Both callers (`scripts/import_master_profile.py`,
+`cutoff.bot.telegram_loop`'s resume-upload handler) updated to extract and pass hyperlinks through.
+`max_tokens` raised 2048 → 4096. `MasterProfileProject` gained the `demo_link` schema field in the
+extraction tool too (it existed on the model already for rendering, but the extractor never knew to
+populate it).
+
+Verified live against the real Gemini key with a PDF built to match the user's actual resume's exact link
+styling (header: URL as the visible text; projects: generic "Live Demo"/"GitHub" labels): both header
+contact links AND both projects' separate GitHub/Live-Demo links came back with their correct, real,
+distinct URLs — the exact case that was broken before.
+
+7 new tests (`test_ingest_hyperlinks.py`, `test_profile_extract.py` extended) plus 2 existing
+`test_telegram_onboard.py` tests fixed to mock the new `extract_pdf_hyperlinks` call. Full suite: 367/367
+passing (360 prior + 7 new).

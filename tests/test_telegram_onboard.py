@@ -132,6 +132,7 @@ def test_resume_upload_happy_path_stages_and_sends_preview(tmp_path, monkeypatch
 
     monkeypatch.setattr(telegram_loop_mod.httpx, "get", fake_get)
     monkeypatch.setattr("cutoff.pipeline.ingest.extract_pdf_text", lambda data: "Riya Mehta\nSkills: Python, Django")
+    monkeypatch.setattr("cutoff.pipeline.ingest.extract_pdf_hyperlinks", lambda data: ["https://github.com/riya"])
     monkeypatch.setattr(
         "cutoff.llm.profile_extract.extract_profile_from_resume_text",
         lambda text, **k: MasterProfile(skills=["Python", "Django"]),
@@ -156,6 +157,7 @@ def test_resume_upload_handles_extraction_failure_without_crashing(tmp_path, mon
 
     monkeypatch.setattr(telegram_loop_mod.httpx, "get", fake_get)
     monkeypatch.setattr("cutoff.pipeline.ingest.extract_pdf_text", lambda data: "some text")
+    monkeypatch.setattr("cutoff.pipeline.ingest.extract_pdf_hyperlinks", lambda data: [])
 
     def broken_extract(text, **k):
         raise RuntimeError("rate limited")

@@ -68,6 +68,39 @@ def test_extract_profile_from_resume_text_returns_a_master_profile(monkeypatch):
     assert call["tool_choice"] == {"type": "tool", "name": TOOL_NAME}
 
 
+def test_extract_profile_from_resume_text_includes_hyperlinks_in_the_prompt(monkeypatch):
+    """The real fix for the "link URL got saved as the literal word GitHub"
+    bug: plain PDF text only ever shows a link's visible label, never its
+    target -- the real URLs (from cutoff.pipeline.ingest.extract_pdf_hyperlinks)
+    must be threaded into the prompt for the model to have any chance of
+    getting the real URL right instead of echoing back the label."""
+    fake_client = _FakeAnthropicClient(_valid_result())
+    monkeypatch.setattr(profile_extract, "get_client", lambda *a, **k: fake_client)
+
+    profile_extract.extract_profile_from_resume_text(
+        "GitHub\nLinkedIn", api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
+        use_cache=False, hyperlinks=["https://github.com/JeetM2207", "https://linkedin.com/in/jeet-manseta"],
+    )
+
+    call = fake_client.messages.calls[0]
+    user_text = call["messages"][0]["content"]
+    assert "https://github.com/JeetM2207" in user_text
+    assert "https://linkedin.com/in/jeet-manseta" in user_text
+
+
+def test_extract_profile_from_resume_text_works_without_hyperlinks(monkeypatch):
+    """hyperlinks is optional -- every existing caller that doesn't pass it
+    (including every test written before this fix) must keep working."""
+    fake_client = _FakeAnthropicClient(_valid_result())
+    monkeypatch.setattr(profile_extract, "get_client", lambda *a, **k: fake_client)
+
+    profile = profile_extract.extract_profile_from_resume_text(
+        "some resume text", api_key="x", model="m", provider="anthropic", base_url=None,
+        db_path=":memory:", use_cache=False,
+    )
+    assert isinstance(profile, MasterProfile)
+
+
 def test_extract_profile_from_resume_text_raises_on_empty_input():
     try:
         profile_extract.extract_profile_from_resume_text(

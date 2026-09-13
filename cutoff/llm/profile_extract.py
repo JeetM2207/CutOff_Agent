@@ -49,7 +49,8 @@ _PROFILE_FRAGMENT_SCHEMA = {
                     "title": {"type": "string"},
                     "tech_stack": {"type": "array", "items": {"type": "string"}},
                     "bullets": {"type": "array", "items": {"type": "string"}},
-                    "link": {"type": ["string", "null"]},
+                    "link": {"type": ["string", "null"], "description": "The project's repo (e.g. GitHub) URL."},
+                    "demo_link": {"type": ["string", "null"], "description": "A live/hosted demo URL, if separate from `link`."},
                 },
                 "required": ["title", "bullets"],
             },
@@ -75,6 +76,13 @@ _SYSTEM = (
     "nothing for style; extract facts as they're written. "
     "`links` means profile URLs only — GitHub, LinkedIn, portfolio site, LeetCode, etc. Never include "
     "the student's email address or phone number as a link; those belong in their own fields. "
+    "A resume PDF's hyperlinks (e.g. a name styled as a clickable link reading just \"GitHub\" or "
+    "\"Live Demo\") don't carry their real URL in the plain text you're given — the real destination "
+    "URLs found in the PDF are listed separately below as REAL LINKS FOUND IN THE DOCUMENT. Match each "
+    "one to the right field (a personal GitHub/LinkedIn link, or a specific project's `link`/`demo_link`) "
+    "using the surrounding text as context, and use that real URL — never invent one, and never fall back "
+    "to using the visible link text (like the word \"GitHub\") as if it were the URL itself. If you can't "
+    "confidently match a real link to what it's for, leave that field null rather than guessing wrong. "
     f"Call {TOOL_NAME} with the result."
 )
 
@@ -83,7 +91,7 @@ def _call_anthropic(client, model: str, text: str) -> dict:
     tool = {"name": TOOL_NAME, "description": "Record the structured profile extracted from a resume.",
             "input_schema": _PROFILE_FRAGMENT_SCHEMA}
     resp = client.messages.create(
-        model=model, max_tokens=2048, temperature=0, system=_SYSTEM,
+        model=model, max_tokens=4096, temperature=0, system=_SYSTEM,
         tools=[tool], tool_choice={"type": "tool", "name": TOOL_NAME},
         messages=[{"role": "user", "content": text}],
     )
@@ -99,7 +107,7 @@ def _call_openai_compatible(client, model: str, text: str) -> dict:
         "parameters": _PROFILE_FRAGMENT_SCHEMA,
     }}
     resp = client.chat.completions.create(
-        model=model, temperature=0, max_tokens=2048,
+        model=model, temperature=0, max_tokens=4096,
         tools=[tool], tool_choice={"type": "function", "function": {"name": TOOL_NAME}},
         messages=[{"role": "system", "content": _SYSTEM}, {"role": "user", "content": text}],
     )
@@ -113,14 +121,24 @@ def _call_openai_compatible(client, model: str, text: str) -> dict:
 def extract_profile_from_resume_text(
     resume_text: str,
     *, api_key: str, model: str, provider: str, base_url: str | None, db_path: str, use_cache: bool = True,
+    hyperlinks: list[str] | None = None,
 ) -> MasterProfile:
     """Returns a validated MasterProfile. Raises on any failure (empty
     input, LLM error, malformed response) — the CLI/bot caller decides how
-    to handle that (never silently produces a half-built profile)."""
+    to handle that (never silently produces a half-built profile).
+
+    `hyperlinks` are the REAL URIs embedded in the source PDF (see
+    cutoff.pipeline.ingest.extract_pdf_hyperlinks) — plain-text extraction
+    alone only shows a link's clickable label ("GitHub"), never its actual
+    target, so without this the model has no way to recover a real URL at
+    all. Optional (still works, just can't populate links/project URLs
+    reliably) so tests and any other resume_text-only caller aren't broken."""
     if not resume_text.strip():
         raise ValueError("no resume text to extract from")
 
     user_text = f"RESUME TEXT:\n{resume_text.strip()[:15000]}"
+    if hyperlinks:
+        user_text += "\n\nREAL LINKS FOUND IN THE DOCUMENT:\n" + "\n".join(hyperlinks[:30])
     phash = prompt_hash(provider, model, _SYSTEM, user_text)
 
     if use_cache:

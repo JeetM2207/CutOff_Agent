@@ -61,6 +61,30 @@ def extract_pdf_text(data: bytes) -> str:
     return "\n".join(pages_text)
 
 
+def extract_pdf_hyperlinks(data: bytes) -> list[str]:
+    """Returns every unique clickable-link URI actually embedded in the PDF
+    (e.g. a real \\href target in a LaTeX-built resume) — found live
+    (cutoff.llm.profile_extract's onboarding parser): `extract_pdf_text`
+    above only returns a link's VISIBLE text ("GitHub", "Live Demo"), never
+    the URL it points to — pdfplumber's plain-text extraction discards
+    hyperlink annotations entirely. Without this, an LLM reading only the
+    plain text has no way to recover the real URL behind a label like
+    that, and can only guess (which is exactly what it did: echoing the
+    label back as if it were the URL)."""
+    import pdfplumber
+
+    urls: list[str] = []
+    seen: set[str] = set()
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        for page in pdf.pages:
+            for link in page.hyperlinks:
+                uri = link.get("uri")
+                if uri and uri not in seen:
+                    seen.add(uri)
+                    urls.append(uri)
+    return urls
+
+
 def ingest(msg: EmailMessage, mail: MailSource) -> IngestedEmail:
     clean, quoted = split_quoted(strip_html(msg.body_text))
 
