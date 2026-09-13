@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✂️ CutOff
+# CutOff
 
 ### The agent that never lets a student miss a campus recruiting drive they qualify for — or register for one they don't
 
