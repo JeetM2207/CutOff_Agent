@@ -41,11 +41,11 @@ def _jd_pdf_bytes() -> bytes:
     _, height = A4
     y = height - 60
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y, "Meridian Robotics - Backend Software Engineer (2026 Batch)")
+    c.drawString(50, y, "Google - Software Engineer (2026 Batch)")
     y -= 30
     c.setFont("Helvetica", 11)
     for line in [
-        "Role: Backend Software Engineer", "CTC: 11 LPA", "",
+        "Role: Software Engineer", "CTC: 11 LPA", "",
         "About the role:",
         "We are looking for a backend engineer with strong hands-on experience in",
         "Django REST Framework and PostgreSQL. Experience deploying services with",
@@ -115,17 +115,21 @@ PRESETS = {
         ),
     },
     "new_drive_with_jd": {
-        # Same drive as "new_drive" but with an actual job-description PDF
+        # Same shape as "new_drive" but with an actual job-description PDF
         # attached -- required to exercise the resume-choice card, dynamic
         # resume generation, and interview-prep intel, since JD text for
         # all three comes only from a PDF attachment, never the email body
-        # (see cutoff/pipeline/ingest.py).
-        "subject": "Campus Drive: Meridian Robotics - Backend Software Engineer (2026 Batch)",
+        # (see cutoff/pipeline/ingest.py). A real, globally-recognized
+        # company name deliberately, not another fictional one like
+        # "Meridian Robotics" -- prep intel searches LeetCode/GeeksforGeeks/
+        # Glassdoor for the company by name, and a made-up company returns
+        # zero real results every time, which looks like a bug but isn't.
+        "subject": "Campus Drive: Google - Software Engineer (2026 Batch)",
         "body": (
-            "Dear Students,\n\nMeridian Robotics is visiting campus for the Backend Software Engineer "
+            "Dear Students,\n\nGoogle is visiting campus for the Software Engineer "
             "role (CTC 11 LPA). Please find the detailed job description attached.\n\n"
             "Eligibility: CSE, IT, ECE | CGPA 7.0 and above | No active backlogs.\n"
-            "Register here: https://forms.gle/demoMeridianJD by 11:59 PM, tomorrow.\n\nRegards,\nCareer Office"
+            "Register here: https://forms.gle/demoGoogleJD by 11:59 PM, tomorrow.\n\nRegards,\nCareer Office"
         ),
         "attachment": ("job_description.pdf", _jd_pdf_bytes),
     },
