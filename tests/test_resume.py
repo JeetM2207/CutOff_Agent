@@ -2,12 +2,17 @@
 mapping, plus the JD-content smart match and dynamic generation layered on
 top (never calls a real LLM or Drive API here — Section 0 rule 3)."""
 from cutoff.adapters.fakes import FakeFileStore
-from cutoff.models import ResumeFile, StudentProfile
+from cutoff.models import MasterProfile, MasterProfileProject, ResumeFile, StudentProfile
 from cutoff.pipeline import resume
 
 STUDENT = StudentProfile(
     name="Riya Mehta", roll_no="21BCS045", email="riya@college.edu", branch="CSE",
     gpa=7.42, active_backlogs=0, batch_year=2026,
+)
+
+MASTER_PROFILE = MasterProfile(
+    skills=["Python", "Django"],
+    projects=[MasterProfileProject(title="Order Service", bullets=["Built a Django REST API."])],
 )
 
 
@@ -110,7 +115,7 @@ def test_select_resume_smart_falls_back_when_pdf_extraction_fails_for_everything
 
 
 # --- Dynamic resume generation (Section 6.4 extension) ----------------------
-# Every test above passes no student_profile/master_profile_md/
+# Every test above passes no student_profile/master_profile/
 # generated_resume_dir, which is exactly what every caller written before
 # this feature existed does -- confirming generation stays fully inert
 # unless a caller opts in explicitly.
@@ -135,7 +140,7 @@ def test_select_resume_smart_generates_a_tailored_resume_when_configured(monkeyp
     picked, reason = resume.select_resume_smart(
         "SDE", "We need a backend engineer with Django experience.", store,
         api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
-        student_profile=STUDENT, master_profile_md="## Skills\n- Python\n- Django",
+        student_profile=STUDENT, master_profile=MASTER_PROFILE,
         generated_resume_dir=str(tmp_path), public_base_url="http://127.0.0.1:8000",
     )
     assert picked.name == resume.GENERATED_RESUME_NAME
@@ -156,7 +161,7 @@ def test_select_resume_smart_generation_ignores_static_resumes_being_empty(monke
     picked, reason = resume.select_resume_smart(
         "SDE", "We need a backend engineer.", store,
         api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
-        student_profile=STUDENT, master_profile_md="## Skills\n- Python",
+        student_profile=STUDENT, master_profile=MASTER_PROFILE,
         generated_resume_dir=str(tmp_path),
     )
     assert picked.name == resume.GENERATED_RESUME_NAME
@@ -177,7 +182,7 @@ def test_select_resume_smart_falls_back_to_static_match_when_generation_fails(mo
     picked, reason = resume.select_resume_smart(
         "SDE", "We need a backend engineer.", store,
         api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
-        student_profile=STUDENT, master_profile_md="## Skills\n- Python",
+        student_profile=STUDENT, master_profile=MASTER_PROFILE,
         generated_resume_dir=str(tmp_path),
     )
     assert picked.name == "resume_SDE.pdf"  # fell all the way back to the static JD-content match
@@ -199,7 +204,7 @@ def test_select_resume_smart_falls_back_when_pdf_render_fails(monkeypatch, tmp_p
     picked, reason = resume.select_resume_smart(
         "SDE", "We need a backend engineer.", store,
         api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
-        student_profile=STUDENT, master_profile_md="## Skills\n- Python",
+        student_profile=STUDENT, master_profile=MASTER_PROFILE,
         generated_resume_dir=str(tmp_path),
     )
     assert picked.name == "resume_SDE.pdf"
@@ -207,7 +212,7 @@ def test_select_resume_smart_falls_back_when_pdf_render_fails(monkeypatch, tmp_p
 
 
 def test_select_resume_smart_generation_stays_inert_without_master_profile(monkeypatch, tmp_path):
-    """student_profile alone (no master_profile_md) must not trigger
+    """student_profile alone (no master_profile) must not trigger
     generation — every field is required before it activates."""
     store = FakeFileStore(_resumes())
     called = []
@@ -217,7 +222,7 @@ def test_select_resume_smart_generation_stays_inert_without_master_profile(monke
     picked, reason = resume.select_resume_smart(
         "SDE", "We need a backend engineer.", store,
         api_key="x", model="m", provider="anthropic", base_url=None, db_path=":memory:",
-        student_profile=STUDENT, master_profile_md=None, generated_resume_dir=str(tmp_path),
+        student_profile=STUDENT, master_profile=None, generated_resume_dir=str(tmp_path),
     )
     assert not called
     assert picked.name == "resume_SDE.pdf"  # category fallback (no JD-matching stub set up here)

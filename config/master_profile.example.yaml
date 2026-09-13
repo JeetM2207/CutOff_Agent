@@ -1,0 +1,59 @@
+# Master Profile (template) — Section 6.4 extension: dynamic resume generation.
+#
+# Copy this file to config/master_profile.yaml (gitignored — never committed,
+# never uploaded anywhere) and fill it in with your own real, complete
+# information. Nothing gets invented at generation time: the LLM can only
+# select and rephrase skills/projects listed here, never add one that isn't
+# (enforced by the tool schema itself, not just an instruction — see
+# cutoff/llm/resume_generate.py). Education, experience, and achievements are
+# never re-decided by the LLM at all — they're rendered straight onto the
+# resume exactly as written here, every time.
+#
+# If this file is missing, empty, or fails to parse, dynamic generation is
+# skipped entirely and the agent falls back to the static resume_*.pdf
+# matching it already does. Name/roll number/email come from your existing
+# StudentProfile (the Profile sheet tab) — don't repeat them here.
+
+phone: "+91-XXXXXXXXXX"  # optional — omit the line entirely to leave it off the resume
+
+links:
+  - label: GitHub
+    url: https://github.com/your-username
+  - label: LinkedIn
+    url: https://linkedin.com/in/your-profile
+  # - label: Portfolio
+  #   url: https://your-site.example
+
+education:
+  - degree: "B.Tech, Computer Science and Engineering"
+    institution: "Your College Name"
+    cgpa: "7.42"
+    batch_year: 2026
+    notes: ""  # optional — relevant coursework, honors, etc.
+
+skills:
+  - Python
+  - Java
+  - SQL
+  # add every real skill you have — the LLM can only pick from this list,
+  # so a thin list here means a thin (but honest) generated resume
+
+projects:
+  - title: "Your Project Name"
+    tech_stack: [Python, Django, PostgreSQL]
+    bullets:
+      - "What it does, in one line."
+      - "Your specific contribution, with a real, measurable outcome if you have one."
+    link: ""  # optional — GitHub repo or live demo URL
+  # repeat for every real project you have
+
+experience:
+  # always shown in full on the generated resume, never filtered by the LLM
+  - title: "Role, Company, dates"
+    bullets:
+      - "What you actually did, as a bullet point."
+      - "A real metric or outcome, where possible."
+
+achievements:
+  # always shown in full — certifications, awards, competition results, etc.
+  - "Example: Runner-up, college-level hackathon."

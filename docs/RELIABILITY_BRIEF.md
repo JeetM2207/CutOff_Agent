@@ -279,6 +279,53 @@ calendar/telegram, exactly like the eval harness): every skill and bullet in the
 traceable to a real test master profile, correctly re-prioritized for the job description's own
 terminology, rendered into a clean single-page PDF. 15 new tests; full suite 267/267.
 
+### Take two: fixed format, real profile data, an explicit runtime choice
+
+Pushed further on direct feedback: the resume needed a genuinely fixed, complete format (not a
+skills-and-projects-only sketch), the master profile needed to hold real, comprehensive data (education,
+links like GitHub, experience, achievements — "the whole thing"), and — the significant one — the
+student must be *asked* which resume to use per drive, never have the agent decide silently.
+
+**Structured profile, not a Markdown blob.** `config/master_profile.yaml` (gitignored; `.example.yaml`
+checked in) now holds a typed `MasterProfile`: links, education, skills, projects (with tech stack and a
+repo/demo link), experience, achievements. GitHub is a link shown in the header, deliberately not a live
+API pull — summarizing real repos accurately needs either GitHub's API (inconsistent README quality,
+rate limits) or the LLM guessing from a bare URL, a real hallucination risk this brief has spent the
+whole session steering away from elsewhere. A link is honest and is what every real resume already does.
+
+**Fixed template, schema-enforced grounding.** Every generated resume now has the same complete shape:
+Header/Contact → Education → Headline → Skills → Projects → Experience → Achievements. Education,
+Experience, and Achievements render straight from the master profile, never touched by the LLM — only
+headline/skills-subset/project-subset are tailored per JD. Grounding is now enforced at the JSON-schema
+level (an `enum` constrains `skills` and each project `title` to the literal master-profile entries,
+exactly like `resume_match.py`'s `chosen_filename`), with a Python-side re-check on top since providers
+don't always enforce `enum` strictly (this project has hit that before).
+
+**The runtime choice, with no new database table.** The agent no longer picks a resume automatically at
+all when generation is configured — it sends a choice card first ("Use my resume on file" / "Generate
+tailored resume" / Skip / Remind me in 2h) and only proceeds to the real approval card once the student
+answers. This reuses the *existing* `approvals` table and idempotency-key mechanism rather than adding
+new state: the choice card is planned under the same key the approval card would have used, so once
+answered, replanning under that key edits the same message in place (via its already-recorded
+`message_id`) instead of sending a second one — the same "same key = same row" rule that already powers
+revision edits elsewhere in this pipeline. The answer is persisted on the drive itself so a later
+revision keeps showing the same resume instead of re-asking.
+
+**Two bugs found while wiring this, handled differently.** A resend of a snoozed choice card only ever
+rewrote `"a:{token}:"` callback prefixes — a choice card also carries `"r:{token}:..."` buttons, so a
+resent one would leave its Use/Generate buttons pointing at a stale token, silently doing nothing on tap.
+Fixed directly, with a regression test. Separately, and unrelated to this feature: the `approvals` table's
+`telegram_message_id` column is inserted `NULL` and never written anywhere afterward, so
+`_edit_original` (Skip/Snooze/No/Mark-submitted's confirmation text) has silently never actually edited
+the message the student sees, with zero prior test coverage to have caught it. Doesn't affect the new
+choice flow (which uses the idempotency-key mechanism instead) — flagged and spun off as its own fix
+rather than folded into this already-large change.
+
+Verified live again against the real Gemini key: a full master profile (14 skills, 3 projects, 1
+internship, 2 achievements, a GitHub link) produced a correctly re-prioritized skill list and project
+pick for a backend JD, rendered into a properly-sectioned single-page PDF. Full suite: 280/280 (13 new
+tests).
+
 ## Known limitations
 
 - `list_suspicious`'s reach is bounded by `SUSPICIOUS_QUERY_KEYWORDS` — a fixed phrase list. A
@@ -293,7 +340,9 @@ terminology, rendered into a clean single-page PDF. 15 new tests; full suite 267
 - The held-out set is intentionally small (10 scenarios) to keep it genuinely un-peeked-at; it is not a substitute for a larger blind eval in production.
 - The self-heal tool is diagnosis-only by design (see above) — it has a 0-for-2 track record on automatically identifying *root cause* on its own drafts, which is exactly why it never auto-applies a fix.
 - The free-tier LLM key's daily quota (500 req/day) is comfortably enough for real single-student usage but not for repeated full-suite eval reruns in one sitting — plan eval runs accordingly, or use a paid key for heavy iteration.
-- A generated resume's link only resolves wherever this app's own dashboard server is reachable — `PUBLIC_BASE_URL` needs to point at an actual public tunnel (not the default `127.0.0.1`) for it to work from a real recruiter's Google Form, not just the student's own machine. `config/master_profile.md` is manually maintained, same category of limitation as `RESUME_FOLDER_ID` above.
+- A generated resume's link only resolves wherever this app's own dashboard server is reachable — `PUBLIC_BASE_URL` needs to point at an actual public tunnel (not the default `127.0.0.1`) for it to work from a real recruiter's Google Form, not just the student's own machine. `config/master_profile.yaml` is manually maintained, same category of limitation as `RESUME_FOLDER_ID` above.
+- `approvals.telegram_message_id` is never populated anywhere in the codebase, so `_edit_original` (Skip/Snooze/"No"/Mark-submitted's confirmation text) silently never actually edits the message the student sees — the underlying state transition is still correct, only the visible confirmation is missing. Found while building the resume-choice flow (which is unaffected — it uses a different, working mechanism); zero prior test coverage existed for this code path. Spun off as its own fix rather than folded into an already-large change.
+- If a revision lands for a drive whose resume choice is still un-answered (rare timing window), the edited card shows "Resume: none on file" rather than re-prompting — an honest degrade, not a crash, but not re-asked either until the student eventually answers the original choice card.
 
 ## Reproduce
 

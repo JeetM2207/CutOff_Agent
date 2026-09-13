@@ -5,10 +5,15 @@ but is not a job description. Never calls the real LLM or Drive API
 (Section 0 rule 3): resume_match.select_best_resume and both extract_pdf_text
 call sites are stubbed."""
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from cutoff import db
 from cutoff.adapters.fakes import FakeCalendarStore, FakeFileStore, FakeMailSource, FakeMessenger, FakeSheetStore
-from cutoff.models import AttachmentMeta, CollegePolicy, Criteria, EmailMessage, Evidence, Notice, ResumeFile, StudentProfile
+from cutoff.bot.telegram_loop import TelegramBotLoop
+from cutoff.models import (
+    AttachmentMeta, CollegePolicy, Criteria, EmailMessage, Evidence, MasterProfile, MasterProfileProject,
+    Notice, ResumeFile, StudentProfile,
+)
 from cutoff.pipeline import executor, ingest, resume, run
 from cutoff.pipeline.executor import Adapters
 
@@ -111,19 +116,21 @@ def test_eligible_new_drive_with_jd_attachment_uses_smart_match(tmp_path, monkey
     assert "Lists backend + SQL experience matching the JD." in approval_text
 
 
-def test_eligible_new_drive_generates_a_tailored_resume_when_master_profile_configured(tmp_path, monkeypatch):
+def test_eligible_new_drive_asks_which_resume_then_generates_one_on_request(tmp_path, monkeypatch):
     """Dynamic resume generation (Section 6.4 extension), wired all the way
-    through PipelineContext -> select_resume_smart -> the Telegram approval
-    card, end to end. Never calls a real LLM: both the tailoring call and the
-    PDF renderer are stubbed."""
+    through: an ELIGIBLE drive with a master profile configured sends a
+    resume-CHOICE card first (never decides silently); tapping "Generate
+    tailored resume" resolves it into the real Register/Skip/Remind card,
+    edited in place under the same message. Never calls a real LLM: both the
+    tailoring call and the PDF renderer are stubbed."""
     db_path = str(tmp_path / "cutoff.db")
     db.init_db(db_path)
 
     monkeypatch.setattr(ingest, "extract_pdf_text", lambda data: "Looking for a backend engineer with Django experience.")
 
-    def fake_generate_tailored_resume(jd_text, master_profile_md, **kwargs):
+    def fake_generate_tailored_resume(jd_text, master_profile, **kwargs):
         assert "backend engineer" in jd_text
-        assert "Django" in master_profile_md
+        assert "Django" in master_profile.skills
         sections = {
             "headline": "Backend-focused CSE student.", "skills": ["Python", "Django"],
             "highlighted_projects": [{"title": "Order Service", "bullets": ["Built a Django REST API."]}],
@@ -148,6 +155,10 @@ def test_eligible_new_drive_generates_a_tailored_resume_when_master_profile_conf
             ],
         )
 
+    master_profile = MasterProfile(
+        skills=["Python", "Django"],
+        projects=[MasterProfileProject(title="Order Service", bullets=["Built a Django REST API."])],
+    )
     files = FakeFileStore([])  # generation needs no pre-existing Drive resume at all
     mail = FakeMailSource()
     calendar = FakeCalendarStore()
@@ -157,7 +168,7 @@ def test_eligible_new_drive_generates_a_tailored_resume_when_master_profile_conf
         mail=mail, files=files, extract_fn=stub_extract, api_key="unused", model="stub",
         timezone_name="Asia/Kolkata", db_path=db_path, use_llm_cache=False, calendar=calendar,
         provider="anthropic",
-        master_profile_md="## Skills\n- Python\n- Django",
+        master_profile=master_profile,
         generated_resume_dir=str(tmp_path / "generated"), public_base_url="http://127.0.0.1:8000",
     )
 
@@ -172,10 +183,30 @@ def test_eligible_new_drive_generates_a_tailored_resume_when_master_profile_conf
     result = run.process_message(msg, ctx, profile=PROFILE, policy=POLICY, now=NOW)
     assert result.verdict == "ELIGIBLE"
 
-    executor.run_pending(db_path, Adapters(sheets=sheets, calendar=calendar, messenger=messenger))
+    exec_adapters = Adapters(sheets=sheets, calendar=calendar, messenger=messenger, files=files)
+    executor.run_pending(db_path, exec_adapters)
 
+    # Step 1: the FIRST message is a resume choice, not the direct approval.
     sent_texts = [c[1]["text"] for c in messenger.calls if c[0] == "send"]
-    approval_text = next(t for t in sent_texts if "Register?" in t)
+    choice_text = next(t for t in sent_texts if "Want me to use your resume" in t)
+    assert "Register?" not in choice_text
+    approval = executor.get_pending_approval(db_path, result.drive_id)
+    assert approval is not None
+
+    # Step 2: tapping "Generate tailored resume" resolves it in place.
+    settings = SimpleNamespace(
+        llm_api_key="unused", llm_model="stub", llm_provider="anthropic", llm_base_url=None,
+        generated_resume_dir=str(tmp_path / "generated"), public_base_url="http://127.0.0.1:8000",
+        master_profile_path=str(tmp_path / "unused_master_profile.yaml"),
+    )
+    monkeypatch.setattr("cutoff.pipeline.master_profile.load_master_profile", lambda path: master_profile)
+    bot = TelegramBotLoop("token", "chat1", db_path, exec_adapters, settings=settings)
+    bot._handle_resume_choice(approval, "generate")
+
+    edit_calls = [c for c in messenger.calls if c[0] == "edit"]
+    assert len(edit_calls) == 1  # the choice card was edited in place, not sent as a second message
+    approval_text = edit_calls[0][1]["text"]
+    assert "Register?" in approval_text
     assert "/generated_resumes/" in approval_text
     assert "Generated bespoke resume" in approval_text
     assert "Emphasized Django experience matching the JD's backend stack." in approval_text

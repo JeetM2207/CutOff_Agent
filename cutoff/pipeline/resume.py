@@ -2,11 +2,14 @@
 on top, each falling back to the one below it the instant anything goes
 wrong — this is a read, never ledgered, and must never block planning:
 
-1. Dynamic generation: if a master profile (`config/master_profile.md`, a
+1. Dynamic generation: if a master profile (`config/master_profile.yaml`, a
    local, hand-edited file — Section 6.4 extension) is configured, the LLM
    rewrites a job-description-tailored resume from it and a real PDF is
-   compiled on the fly (`resume_pdf.py`), served by this app's own dashboard
-   server rather than uploaded anywhere (no Drive *write* scope needed).
+   compiled on the fly (`resume_pdf.py`, a fixed template — see its own
+   docstring), served by this app's own dashboard server rather than
+   uploaded anywhere (no Drive *write* scope needed). The student chooses
+   this path explicitly, per drive, over a Telegram button — see
+   `resume_mode` below and `planner._plan_resume_choice`.
 2. Static JD-content match: the original behavior — download every resume
    on file, extract its text, have the LLM pick the best content match.
 3. Deterministic category mapping (`select_resume`): the final fallback,
@@ -19,7 +22,7 @@ import logging
 import os
 
 from cutoff.adapters.base import FileStore
-from cutoff.models import ResumeFile, StudentProfile
+from cutoff.models import MasterProfile, ResumeFile, StudentProfile
 from cutoff.pipeline.executor import with_retry
 from cutoff.pipeline.ingest import extract_pdf_text
 
@@ -57,7 +60,7 @@ def _write_generated_pdf(pdf_bytes: bytes, *, output_dir: str) -> str:
 
 
 def _try_generate_tailored_resume(
-    jd_text: str, master_profile_md: str, student_profile: StudentProfile,
+    jd_text: str, master_profile: MasterProfile, student_profile: StudentProfile,
     *, api_key: str, model: str, provider: str, base_url: str | None, db_path: str,
     output_dir: str, public_base_url: str,
 ) -> tuple[ResumeFile, str] | None:
@@ -69,13 +72,10 @@ def _try_generate_tailored_resume(
 
     try:
         sections, reason = generate_tailored_resume(
-            jd_text, master_profile_md, api_key=api_key, model=model, provider=provider,
+            jd_text, master_profile, api_key=api_key, model=model, provider=provider,
             base_url=base_url, db_path=db_path,
         )
-        pdf_bytes = render_resume_pdf(
-            sections, student_name=student_profile.name, student_roll_no=student_profile.roll_no,
-            student_email=student_profile.email,
-        )
+        pdf_bytes = render_resume_pdf(sections, student_profile=student_profile, master_profile=master_profile)
         filename = _write_generated_pdf(pdf_bytes, output_dir=output_dir)
     except Exception:
         logger.exception("dynamic resume generation failed; falling back to static resume matching")
@@ -93,26 +93,32 @@ def select_resume_smart(
     files: FileStore,
     *, api_key: str, model: str, provider: str, base_url: str | None, db_path: str,
     student_profile: StudentProfile | None = None,
-    master_profile_md: str | None = None,
+    master_profile: MasterProfile | None = None,
     generated_resume_dir: str | None = None,
     public_base_url: str = "",
+    resume_mode: str = "auto",  # "auto" | "generate" | "match" — see module docstring
 ) -> tuple[ResumeFile | None, str | None]:
     """Returns (resume, reason). `reason` is None whenever the deterministic
     category fallback was used instead of an actual JD-content match or a
     dynamically generated one.
 
     Dynamic generation (see module docstring) only ever activates when the
-    caller explicitly supplies student_profile, master_profile_md, AND
+    caller explicitly supplies student_profile, master_profile, AND
     generated_resume_dir — every existing caller that doesn't pass these
     (including every test written before this feature existed) gets the
-    exact prior behavior, unchanged."""
+    exact prior behavior, unchanged. `resume_mode="match"` skips generation
+    even when configured (the student explicitly chose "use my resume on
+    file" — Section 6.4's runtime choice); `resume_mode="generate"` still
+    falls back to static matching if generation itself fails, same
+    never-block-planning guarantee as everything else here."""
     resumes = files.list_resumes()
     if not jd_text.strip():
         return select_resume(role_category, files), None
 
-    if student_profile is not None and master_profile_md and master_profile_md.strip() and generated_resume_dir:
+    generation_configured = student_profile is not None and master_profile is not None and generated_resume_dir
+    if resume_mode != "match" and generation_configured:
         generated = _try_generate_tailored_resume(
-            jd_text, master_profile_md, student_profile,
+            jd_text, master_profile, student_profile,
             api_key=api_key, model=model, provider=provider, base_url=base_url, db_path=db_path,
             output_dir=generated_resume_dir, public_base_url=public_base_url,
         )

@@ -7,7 +7,7 @@ cutoff.db-wal
 cutoff.db-shm
 traces.jsonl
 generated_resumes/
-config/master_profile.md
+config/master_profile.yaml
 *.log
 .venv/
 __pycache__/

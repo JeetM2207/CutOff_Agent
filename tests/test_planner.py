@@ -119,6 +119,59 @@ def test_new_drive_not_eligible_has_no_telegram_message(db_path):
     assert any(a.app == "sheets" for a in actions)
 
 
+# --- Section 6.4 extension: resume-choice card (dynamic resume generation) --
+
+def test_new_drive_eligible_with_needs_resume_choice_sends_choice_card_not_approval(db_path):
+    drive = make_drive()
+    actions = planner.plan(
+        db_path, drive=drive, previous_verdict=None, notice=notice(),
+        verdict=Verdict(result="ELIGIBLE"), deadline_state="OPEN", profile=profile(), resume=None,
+        needs_resume_choice=True,
+    )
+    tg = next(a for a in actions if a.app == "telegram")
+    assert tg.idempotency_key == f"tg:{drive.drive_id}:main"  # same slot the direct approval would use
+    assert "Register?" not in tg.payload["text"]
+    assert "Want me to use your resume" in tg.payload["text"]
+    button_labels = {b["text"] for b in tg.payload["buttons"]}
+    assert button_labels == {"Use my resume", "Generate tailored resume", "Skip", "Remind me in 2h"}
+    approval = executor.get_pending_approval(db_path, drive.drive_id)
+    assert approval is not None and approval["status"] == "PENDING"
+
+
+def test_became_eligible_with_needs_resume_choice_sends_choice_card_under_versioned_key(db_path):
+    drive_v2 = make_drive(version=2)
+    actions = planner.plan(
+        db_path, drive=drive_v2, previous_verdict="NOT_ELIGIBLE", notice=notice("REVISION"),
+        verdict=Verdict(result="ELIGIBLE"), deadline_state="OPEN", profile=profile(), resume=None,
+        needs_resume_choice=True,
+    )
+    tg = next(a for a in actions if a.app == "telegram")
+    assert tg.idempotency_key == f"tg:{drive_v2.drive_id}:v2"
+    assert "Want me to use your resume" in tg.payload["text"]
+
+
+def test_plan_resolved_approval_reuses_the_resume_choice_cards_action_row(db_path):
+    """Section 6.4: once the student answers the resume-choice card,
+    plan_resolved_approval must EDIT that same message (same idempotency
+    key -> same action row), never send a second, separate one."""
+    drive = make_drive()
+    planner.plan(
+        db_path, drive=drive, previous_verdict=None, notice=notice(),
+        verdict=Verdict(result="ELIGIBLE"), deadline_state="OPEN", profile=profile(), resume=None,
+        needs_resume_choice=True,
+    )
+    before_ids = {a.action_id for a in executor.get_actions_for_drive(db_path, drive.drive_id)}
+
+    resolved = planner.plan_resolved_approval(db_path, drive, profile(), None, new_epoch=False)
+
+    after_ids = {a.action_id for a in executor.get_actions_for_drive(db_path, drive.drive_id)}
+    assert before_ids == after_ids  # same row updated in place, not a new one
+    assert resolved.idempotency_key == f"tg:{drive.drive_id}:main"
+    assert "Register?" in resolved.payload["text"]
+    button_labels = {b["text"] for b in resolved.payload["buttons"]}
+    assert button_labels == {"Approve", "Skip", "Remind me in 2h"}
+
+
 def test_revision_eligible_to_not_eligible_voids_and_cancels(db_path):
     drive = make_drive(version=1)
     # seed a pending approval + deadline reminder as if v1 had been ELIGIBLE

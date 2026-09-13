@@ -12,7 +12,7 @@ from cutoff import db, trace
 from cutoff.adapters.base import CalendarStore, FileStore, MailSource, SheetStore
 from cutoff.llm import grounding
 from cutoff.llm.extract import EXTRACTION_FAILED_SENTINEL
-from cutoff.models import CollegePolicy, EmailMessage, Notice, StudentProfile
+from cutoff.models import CollegePolicy, EmailMessage, MasterProfile, Notice, ResumeFile, StudentProfile
 from cutoff.pipeline import clash, eligibility, executor, form_prefill, ingest, planner, resolve, security, shortlist, timeparse
 from cutoff.pipeline import resume as resume_mod
 
@@ -46,13 +46,15 @@ class PipelineContext:
     # lookup above, same as before this existed. main.py wires the real
     # cutoff.pipeline.form_autofill.build_autofilled_url here.
     autofill_form_fn: AutofillFormFn | None = None
-    # Dynamic resume generation (Section 6.4 extension). None/empty
-    # master_profile_md disables it entirely — same "must never block
-    # planning" guarantee as autofill_form_fn above; select_resume_smart
-    # falls straight back to static resume_*.pdf matching. A test-constructed
-    # context that doesn't set these (i.e. every test written before this
-    # feature existed) gets the exact prior behavior, unchanged.
-    master_profile_md: str | None = None
+    # Dynamic resume generation (Section 6.4 extension). None master_profile
+    # disables it entirely — same "must never block planning" guarantee as
+    # autofill_form_fn above; select_resume_smart falls straight back to
+    # static resume_*.pdf matching. A test-constructed context that doesn't
+    # set these (i.e. every test written before this feature existed) gets
+    # the exact prior behavior, unchanged. When configured, the student
+    # chooses per drive (over Telegram) whether to use it or their resume on
+    # file — see _handle_eligible_resume below and planner._plan_resume_choice.
+    master_profile: MasterProfile | None = None
     generated_resume_dir: str | None = None
     public_base_url: str = ""
 
@@ -230,18 +232,48 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
             # (extracted into the same ingested.attachment_text) never gets
             # mistaken for a job description.
             prefilled_form_url = None
+            needs_resume_choice = False
             if (notice.notice_type in ("NEW_DRIVE", "REVISION")
                     and verdict.result == "ELIGIBLE" and dstate != "PASSED"):
-                resume_file, resume_reason = resume_mod.select_resume_smart(
-                    drive.role_category, ingested.attachment_text, ctx.files,
-                    api_key=ctx.api_key, model=ctx.model, provider=ctx.provider,
-                    base_url=ctx.base_url, db_path=ctx.db_path,
-                    student_profile=profile, master_profile_md=ctx.master_profile_md,
-                    generated_resume_dir=ctx.generated_resume_dir, public_base_url=ctx.public_base_url,
-                )
+                # Captured here (not just used transiently) so a resume
+                # choice made later, asynchronously, from a Telegram
+                # callback -- long after this email's attachment text is out
+                # of scope -- still has the job description to generate
+                # from. Section 6.4 extension.
+                drive.jd_text = ingested.attachment_text or drive.jd_text
+                resolve.save_drive(ctx.db_path, drive)
+
+                if drive.resolved_resume_pick is not None:
+                    # The student already answered "use mine / generate one"
+                    # for this drive (possibly on an earlier revision) --
+                    # keep showing that choice, never re-ask on every update.
+                    # file_id is None when they answered but no resume was
+                    # actually available/generated (never crash, just show
+                    # the "none on file" text same as select_resume_smart's
+                    # own None case would).
+                    pick = drive.resolved_resume_pick
+                    resume_file = (
+                        ResumeFile(file_id=pick["file_id"], name=pick["name"], web_view_link=pick["web_view_link"])
+                        if pick.get("file_id") else None
+                    )
+                    resume_reason = pick.get("reason")
+                elif ctx.master_profile is not None and ctx.generated_resume_dir:
+                    # Dynamic generation is configured but this drive's
+                    # resume question hasn't been answered yet -- ask,
+                    # never silently decide (Section 6.4's explicit runtime
+                    # choice). planner.plan's needs_resume_choice fork below
+                    # sends a choice card instead of the usual approval card.
+                    resume_file, resume_reason = None, None
+                    needs_resume_choice = True
+                else:
+                    resume_file, resume_reason = resume_mod.select_resume_smart(
+                        drive.role_category, ingested.attachment_text, ctx.files,
+                        api_key=ctx.api_key, model=ctx.model, provider=ctx.provider,
+                        base_url=ctx.base_url, db_path=ctx.db_path,
+                    )
 
                 autofilled_url = None
-                if ctx.autofill_form_fn is not None and drive.form_url:
+                if not needs_resume_choice and ctx.autofill_form_fn is not None and drive.form_url:
                     resume_text = ""
                     if resume_file is not None:
                         ok, data, err = executor.with_retry(
@@ -276,6 +308,7 @@ def process_message(msg: EmailMessage, ctx: PipelineContext, *, profile: Student
                 verdict=verdict, deadline_state=dstate, profile=profile, resume=resume_file,
                 resume_reason=resume_reason, prefilled_form_url=prefilled_form_url,
                 event_clash_warnings=event_clash_warnings, shortlist_result=shortlist_result,
+                needs_resume_choice=needs_resume_choice,
             )
 
     return RunResult(run_id, msg.message_id, notice.notice_type, drive.drive_id, verdict.result,

@@ -304,17 +304,15 @@ def _build_demo_state() -> dict:
     }
 
 
-def _load_master_profile_md(settings) -> str | None:
+def _load_master_profile(settings):
     """Read fresh on every demo call (not cached at import time) so editing
-    config/master_profile.md takes effect on the next demo click without a
+    config/master_profile.yaml takes effect on the next demo click without a
     server restart -- useful mid-hackathon iteration. None disables dynamic
     resume generation entirely; the demo path then behaves exactly as it did
     before this feature existed."""
-    path = Path(settings.master_profile_path)
-    if not path.exists():
-        return None
-    text = path.read_text(encoding="utf-8")
-    return text if text.strip() else None
+    from cutoff.pipeline.master_profile import load_master_profile
+
+    return load_master_profile(settings.master_profile_path)
 
 
 _demo = _build_demo_state()
@@ -460,12 +458,14 @@ def demo_send(body: DemoSendRequest) -> dict:
         model=settings.llm_model, timezone_name=settings.timezone, db_path=settings.db_path,
         provider=settings.llm_provider, base_url=settings.llm_base_url,
         calendar=_demo["calendar_w"], sheets=_demo["sheets_w"],
-        master_profile_md=_load_master_profile_md(settings),
+        master_profile=_load_master_profile(settings),
         generated_resume_dir=settings.generated_resume_dir, public_base_url=settings.public_base_url,
     )
     result = run.process_message(msg, ctx, profile=DEMO_STUDENT_PROFILE, policy=DEMO_COLLEGE_POLICY, now=datetime.now(timezone.utc))
 
-    exec_adapters = Adapters(sheets=_demo["sheets_w"], calendar=_demo["calendar_w"], messenger=_demo["telegram_w"])
+    exec_adapters = Adapters(
+        sheets=_demo["sheets_w"], calendar=_demo["calendar_w"], messenger=_demo["telegram_w"], files=_demo["files"],
+    )
     breaker = executor.shared_breaker(settings.db_path)
     executor.run_pending(settings.db_path, exec_adapters, breaker)
 

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from cutoff import db, trace
-from cutoff.adapters.base import CalendarStore, Messenger, SheetStore
+from cutoff.adapters.base import CalendarStore, FileStore, Messenger, SheetStore
 from cutoff.models import Action, Button, CalendarEvent
 
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
@@ -313,6 +313,12 @@ class Adapters:
     sheets: SheetStore
     calendar: CalendarStore
     messenger: Messenger
+    # Optional: only cutoff.bot.telegram_loop's resume-choice handler needs
+    # this (Section 6.4 extension), to run the static resume match when the
+    # student answers "use my resume on file." Every other Adapters
+    # construction site (including every test written before this feature
+    # existed) doesn't pass it and is unaffected.
+    files: FileStore | None = None
 
 
 def _execute_one(action: Action, adapters: Adapters) -> dict:

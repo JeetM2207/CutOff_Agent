@@ -101,6 +101,16 @@ class Drive(BaseModel):
     role_category: Literal["SDE", "DATA", "CORE", "PRODUCT", "BUSINESS", "OTHER"] | None = None
     registered: bool = False
     last_verdict: Literal["ELIGIBLE", "NOT_ELIGIBLE", "NEEDS_REVIEW"] | None = None
+    # Dynamic resume generation (Section 6.4 extension). jd_text is captured
+    # once at extraction time so a resume choice made later, asynchronously,
+    # from a Telegram callback (long after the original email's attachment
+    # text is out of scope) still has the job description to generate from.
+    # resolved_resume_pick records the student's answer to "use my resume on
+    # file, or generate one?" (a plain dict, not a ResumeFile, to keep Drive's
+    # own schema dependency-free) so a later revision to the same drive shows
+    # the same resume instead of asking again.
+    jd_text: str | None = None
+    resolved_resume_pick: dict | None = None
 
 
 # --- Student / policy -----------------------------------------------------------
@@ -119,6 +129,51 @@ class StudentProfile(BaseModel):
     placed_status: Literal["UNPLACED", "PLACED"] = "UNPLACED"
     current_offer_lpa: float | None = None
     timezone: str = "Asia/Kolkata"
+
+
+# --- Master profile (Section 6.4 extension: dynamic resume generation) -------
+# A local, hand-edited file (config/master_profile.yaml, gitignored) is the
+# ONLY source of truth for dynamic resume generation — see
+# cutoff.llm.resume_generate's grounding rules. Education/experience/
+# achievements/links are rendered onto the generated resume deterministically
+# (never re-decided by the LLM); only headline/skills-subset/project-subset
+# are LLM-tailored per job description.
+
+class ProfileLink(BaseModel):
+    label: str  # "GitHub", "LinkedIn", "Portfolio", etc.
+    url: str
+
+
+class EducationEntry(BaseModel):
+    degree: str  # e.g. "B.Tech, Computer Science and Engineering"
+    institution: str
+    cgpa: str | None = None
+    batch_year: int | None = None
+    notes: str | None = None  # relevant coursework, honors, etc.
+
+
+class MasterProfileProject(BaseModel):
+    title: str
+    tech_stack: list[str] = Field(default_factory=list)
+    bullets: list[str]
+    link: str | None = None  # e.g. a GitHub repo or live demo URL
+
+
+class MasterProfileExperience(BaseModel):
+    title: str  # "Backend Engineering Intern, Company, Summer 2025"
+    bullets: list[str]
+
+
+class MasterProfile(BaseModel):
+    phone: str | None = None
+    links: list[ProfileLink] = Field(default_factory=list)
+    education: list[EducationEntry] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list)
+    projects: list[MasterProfileProject] = Field(default_factory=list)
+    # Always shown in full on a generated resume, never LLM-selected — real
+    # resumes don't usually need "tailoring" of which internships to list.
+    experience: list[MasterProfileExperience] = Field(default_factory=list)
+    achievements: list[str] = Field(default_factory=list)
 
 
 class CollegePolicy(BaseModel):

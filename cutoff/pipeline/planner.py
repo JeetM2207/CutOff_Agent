@@ -170,6 +170,53 @@ def _plan_approval(
     return planned
 
 
+def plan_resolved_approval(
+    db_path: str, drive: Drive, profile: StudentProfile, resume: ResumeFile | None, *,
+    new_epoch: bool, resume_reason: str | None = None, prefilled_form_url: str | None = None,
+) -> Action:
+    """Public entry point for cutoff.bot.telegram_loop: once the student
+    answers the resume-choice card (Section 6.4 extension), this plans the
+    real Register/Skip/Remind card under the SAME idempotency key the choice
+    card used -- executor.plan_action's "same key = same row" rule means
+    run_pending will EDIT the existing message in place (via its stored
+    message_id) rather than sending a new one."""
+    return _plan_approval(
+        db_path, drive, profile, resume, new_epoch=new_epoch,
+        resume_reason=resume_reason, prefilled_form_url=prefilled_form_url,
+    )
+
+
+def _plan_resume_choice(db_path: str, drive: Drive, *, new_epoch: bool) -> Action:
+    """Section 6.4 extension: when dynamic resume generation is configured
+    but this drive's resume question hasn't been answered yet, this card
+    replaces the usual Register/Skip/Remind approval card as the FIRST
+    message sent -- the student explicitly picks a path (never a silent
+    default) before registration is even offered. Skip/Remind still resolve
+    immediately via the existing "a" callback handling; "Use"/"Generate"
+    resolve the resume question and the message is then edited in place
+    into the real approval card (see plan_resolved_approval + telegram_loop's
+    _handle_resume_choice)."""
+    key = f"tg:{drive.drive_id}:v{drive.version}" if new_epoch else f"tg:{drive.drive_id}:main"
+    token = executor.new_short_token()
+    text = (
+        f"You're eligible for {drive.company} ({drive.role})! Deadline {_format_deadline(drive.deadline)}.\n\n"
+        "Want me to use your resume on file, or generate one tailored to this job description?"
+    )
+    buttons = [
+        {"text": "Use my resume", "callback_data": f"r:{token}:use"},
+        {"text": "Generate tailored resume", "callback_data": f"r:{token}:generate"},
+        {"text": "Skip", "callback_data": f"a:{token}:skip"},
+        {"text": "Remind me in 2h", "callback_data": f"a:{token}:snooze"},
+    ]
+    action = _new_action(
+        idempotency_key=key, drive=drive, app="telegram", kind="send_msg", tier="T1_REVERSIBLE",
+        payload={"text": text, "buttons": buttons},
+    )
+    planned = executor.plan_action(db_path, action)
+    executor.create_approval(db_path, planned.action_id, drive.drive_id, drive.version, approval_id=token)
+    return planned
+
+
 def _plan_question(db_path: str, drive: Drive, verdict: Verdict, *, new_epoch: bool) -> Action:
     key = f"tg:{drive.drive_id}:v{drive.version}" if new_epoch else f"tg:{drive.drive_id}:main"
     # A question isn't an "approval," but it needs the same short, collision-
@@ -252,6 +299,7 @@ def plan(
     prefilled_form_url: str | None = None,
     event_clash_warnings: list[str | None] | None = None,
     shortlist_result=None,
+    needs_resume_choice: bool = False,
 ) -> list[Action]:
     """Section 11.3's planner table. Returns every action planned (some
     branches plan several)."""
@@ -336,16 +384,22 @@ def plan(
     if verdict.result == "ELIGIBLE":
         actions.append(_plan_deadline_reminder(db_path, drive))
         if became_eligible:
-            actions.append(_plan_approval(
-                db_path, drive, profile, resume, new_epoch=True,
-                resume_reason=resume_reason, prefilled_form_url=prefilled_form_url,
-            ))
-        elif previous_verdict in (None, "ELIGIBLE"):
-            if previous_verdict is None:
+            if needs_resume_choice:
+                actions.append(_plan_resume_choice(db_path, drive, new_epoch=True))
+            else:
                 actions.append(_plan_approval(
-                    db_path, drive, profile, resume, new_epoch=False,
+                    db_path, drive, profile, resume, new_epoch=True,
                     resume_reason=resume_reason, prefilled_form_url=prefilled_form_url,
                 ))
+        elif previous_verdict in (None, "ELIGIBLE"):
+            if previous_verdict is None:
+                if needs_resume_choice:
+                    actions.append(_plan_resume_choice(db_path, drive, new_epoch=False))
+                else:
+                    actions.append(_plan_approval(
+                        db_path, drive, profile, resume, new_epoch=False,
+                        resume_reason=resume_reason, prefilled_form_url=prefilled_form_url,
+                    ))
             else:
                 actions.append(_plan_edit_main(
                     db_path, drive,

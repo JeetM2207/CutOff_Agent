@@ -1328,3 +1328,79 @@ working with zero pre-existing Drive resumes (the whole point — it doesn't nee
 static matching on an LLM failure and on a PDF-render failure separately; and one full
 `run.process_message` → executor → Telegram-card integration test proving the whole chain end to end.
 Full suite: 267/267 passing.
+
+## Resume generation, take two: fixed format, real profile data, and an explicit runtime choice
+
+User pushed back on the first pass directly: the generated resume needs a *fixed, proper* resume format
+(not the thin skills+projects-only layout from before), it needs real, comprehensive student data
+("GitHub and all," not just a loose text blob), and — most importantly — the student must be *asked*
+which resume to use per drive, not have the agent silently decide. Three real changes, not one:
+
+**1. Structured master profile, not a freeform Markdown blob.** Replaced the earlier
+`config/master_profile.md` (a loose Markdown string handed straight to the LLM) with a typed schema:
+`MasterProfile` (`cutoff/models.py`) with `phone`, `links` (GitHub/LinkedIn/portfolio/etc.), `education`,
+`skills`, `projects` (title/tech_stack/bullets/link), `experience`, `achievements` — a real YAML file
+(`config/master_profile.yaml`, gitignored; `config/master_profile.example.yaml` checked in as the
+template) loaded via `cutoff/pipeline/master_profile.py`. GitHub is a `links` entry shown in the resume
+header — deliberately NOT a live GitHub API pull: fetching and summarizing real repos accurately needs
+either the GitHub API (rate limits, wildly inconsistent README quality) or the LLM guessing from a bare
+URL (a real hallucination risk this project has spent the whole session avoiding elsewhere). A link in
+the header is honest, real, and exactly what every actual resume already does.
+
+**2. Fixed template, schema-enforced grounding.** The resume's layout is now fixed and complete every
+time: Header/Contact → Education → Headline → Skills → Projects → Experience → Achievements
+(`cutoff/pipeline/resume_pdf.py`, plain reportlab, no new dependency). Education, Experience, and
+Achievements are rendered straight from the master profile, untouched by the LLM — only
+headline/skills-subset/project-subset are tailored per JD. Grounding is enforced at the JSON-schema level
+now, not just by prompt instruction: `skills` and each project `title` are constrained by an `enum` to the
+literal master-profile entries (`cutoff/llm/resume_generate.py`), exactly like `resume_match.py` already
+constrains `chosen_filename` — the model cannot select or invent something that isn't there, only choose
+which real things to emphasize and how to phrase them. Kept a Python-side re-check on top (providers don't
+always enforce `enum` strictly — this project has hit that before), so `tests/test_resume_generate.py`
+covers both an invented skill and an invented project title, and that the tool schema itself carries the
+right enum values.
+
+**3. The runtime choice, wired through the existing approval machinery, no new DB table.** When dynamic
+generation is configured and a drive first becomes ELIGIBLE, the agent no longer silently picks a resume
+at all — it sends a resume-CHOICE card first ("Use my resume on file" / "Generate tailored resume" /
+Skip / Remind me in 2h — `planner._plan_resume_choice`), and only proceeds to the real Register/Skip/
+Remind approval card once the student answers. The implementation reuses the *exact* existing
+`approvals` table and idempotency-key mechanism rather than inventing new state: the choice card is
+planned under the same idempotency key the direct approval card would have used, so
+`planner.plan_resolved_approval` (a new public wrapper around the existing `_plan_approval`) re-plans
+under that same key once the student taps a button — `executor.plan_action`'s "same key = same row" rule
+means `run_pending` *edits* the existing message via its already-recorded `message_id`, never sends a
+second one. `cutoff.bot.telegram_loop.TelegramBotLoop` gained a new `kind == "r"` callback dispatch and
+`_handle_resume_choice`, which runs `resume.select_resume_smart` in a forced mode (`"generate"`/`"match"`
+— no more silent "auto" fallback for this path) and persists the answer on `Drive.resolved_resume_pick`
+so a later revision to the same drive keeps showing the same resume instead of re-asking. `Drive` also
+gained `jd_text` (captured at extraction time, since the choice is answered asynchronously, long after
+the original email's attachment text is out of scope for a Telegram callback handled minutes or hours
+later).
+
+**A real, previously-undiscovered bug found while building this, fixed as part of it:** the resend-due-
+reminders token-rewrite (`resend_due_reminders`) only ever rewrote `"a:{token}:"` callback prefixes. A
+resume-choice card carries both `"r:{token}:..."` and `"a:{token}:..."` buttons on the same message — a
+resent choice card would have left its "Use"/"Generate" buttons pointing at a stale, no-longer-PENDING
+token, silently doing nothing on tap. Fixed by rewriting the bare `":{token}:"` substring instead of the
+kind-specific one, and added a dedicated regression test for it
+(`test_resend_of_a_resume_choice_card_refreshes_every_button_kind`).
+
+**A second, separate, pre-existing bug found in the same neighborhood — flagged, not fixed here** (spun
+off as its own task): the `approvals` table's `telegram_message_id` column is inserted as `NULL` by
+`executor.create_approval` and is never written anywhere afterward, which means `_edit_original` (used by
+`_handle_approval`'s "skip"/"snooze", `_handle_question`'s "no"/"show", and
+`handle_mark_submitted`'s final confirmation) has silently never actually edited the Telegram message the
+student sees — the DB state transitions correctly, but the visible confirmation never appears. This
+doesn't affect the new resume-choice flow at all (it uses the idempotency-key re-plan mechanism instead,
+which is unaffected), but it's real and worth its own fix; there was zero existing test coverage for
+`_handle_approval`/`handle_mark_submitted`/`_edit_original` at all, which is exactly why it went unnoticed.
+
+**Verified live** against the real Gemini key, isolated from any real account: a genuinely comprehensive
+master profile (14 skills, 3 projects, 1 internship, 2 achievements, a GitHub link) produced a correctly
+re-prioritized skill list and the single most relevant project for a Meridian Robotics-shaped backend JD,
+rendered into a real, properly-sectioned, single-page PDF indistinguishable in shape from an actual
+student resume. Full test suite: 280/280 passing (13 new tests: `test_resume_pdf.py` extended for the
+fixed template, `test_resume_generate.py` extended for enum-grounding failures, `test_planner.py` extended
+for the choice-card fork and idempotency-key reuse, and a new `test_telegram_resume_choice.py` covering
+the "use" path, graceful degradation with nothing wired up, double-tap safety, and the resend-token fix).

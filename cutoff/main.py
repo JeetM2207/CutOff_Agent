@@ -11,7 +11,6 @@ import logging
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import uvicorn
 
@@ -38,15 +37,10 @@ SUSPICIOUS_QUERY_KEYWORDS = [
 ]
 
 
-def _load_master_profile_md(settings: Settings) -> str | None:
-    """None disables dynamic resume generation entirely (Section 6.4
-    extension) — a missing or empty file is not an error, just "not
-    configured yet," same as an unset RESUME_FOLDER_ID."""
-    path = Path(settings.master_profile_path)
-    if not path.exists():
-        return None
-    text = path.read_text(encoding="utf-8")
-    return text if text.strip() else None
+def _load_master_profile(settings: Settings):
+    from cutoff.pipeline.master_profile import load_master_profile
+
+    return load_master_profile(settings.master_profile_path)
 
 
 @dataclass
@@ -120,11 +114,13 @@ def _worker_loop(settings: Settings, adapters: AppAdapters) -> None:
         calendar=adapters.calendar,
         sheets=adapters.sheets,
         autofill_form_fn=form_autofill.build_autofilled_url,
-        master_profile_md=_load_master_profile_md(settings),
+        master_profile=_load_master_profile(settings),
         generated_resume_dir=settings.generated_resume_dir,
         public_base_url=settings.public_base_url,
     )
-    exec_adapters = Adapters(sheets=adapters.sheets, calendar=adapters.calendar, messenger=adapters.messenger)
+    exec_adapters = Adapters(
+        sheets=adapters.sheets, calendar=adapters.calendar, messenger=adapters.messenger, files=adapters.files,
+    )
     # Shared across every poll (not a fresh one each time) so a circuit
     # actually remembers a run of failures across polls, and so the
     # dashboard's health panel can read the same live state (Section 16
@@ -182,8 +178,12 @@ def _telegram_loop(settings: Settings, adapters: AppAdapters) -> None:
 
     from cutoff.bot.telegram_loop import TelegramBotLoop
 
-    exec_adapters = Adapters(sheets=adapters.sheets, calendar=adapters.calendar, messenger=adapters.messenger)
-    bot = TelegramBotLoop(settings.telegram_bot_token, settings.telegram_chat_id, settings.db_path, exec_adapters)
+    exec_adapters = Adapters(
+        sheets=adapters.sheets, calendar=adapters.calendar, messenger=adapters.messenger, files=adapters.files,
+    )
+    bot = TelegramBotLoop(
+        settings.telegram_bot_token, settings.telegram_chat_id, settings.db_path, exec_adapters, settings=settings,
+    )
     bot.run_forever(_stop_event)
 
 

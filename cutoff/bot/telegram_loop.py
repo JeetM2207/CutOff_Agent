@@ -12,8 +12,9 @@ from datetime import datetime, timezone
 import httpx
 
 from cutoff import db, trace
-from cutoff.models import Action
-from cutoff.pipeline import executor, resolve
+from cutoff.models import Action, ResumeFile
+from cutoff.pipeline import executor, planner, resolve
+from cutoff.pipeline import resume as resume_mod
 from cutoff.pipeline.executor import Adapters
 
 logger = logging.getLogger("cutoff.bot")
@@ -22,12 +23,18 @@ POLL_TIMEOUT = 25
 
 
 class TelegramBotLoop:
-    def __init__(self, bot_token: str, chat_id: str, db_path: str, adapters: Adapters):
+    def __init__(self, bot_token: str, chat_id: str, db_path: str, adapters: Adapters, *, settings=None):
         self._base = f"https://api.telegram.org/bot{bot_token}"
         self._chat_id = str(chat_id)
         self._db_path = db_path
         self._adapters = adapters
         self._offset: int | None = None
+        # Section 6.4 extension (dynamic resume generation): only needed to
+        # resolve a "use my resume / generate one" callback. None disables
+        # that specific callback gracefully (see _handle_resume_choice) --
+        # every existing caller (including every test written before this
+        # feature existed) that doesn't pass it is otherwise unaffected.
+        self._settings = settings
 
     def run_forever(self, stop_event) -> None:
         logger.info("telegram bot loop started")
@@ -89,6 +96,8 @@ class TelegramBotLoop:
                 self._handle_approval(approval, action)
             elif kind == "q":
                 self._handle_question(approval, action)
+            elif kind == "r":
+                self._handle_resume_choice(approval, action)
 
     def _answer(self, callback_id: str, text: str) -> None:
         httpx.post(f"{self._base}/answerCallbackQuery",
@@ -152,8 +161,14 @@ class TelegramBotLoop:
 
             payload = json.loads(action_row["payload"])
             old_token, new_token = approval["approval_id"], executor.new_short_token()
+            # Replace the bare token, not "a:{token}:" specifically — a
+            # resent card can carry buttons of more than one kind (e.g. the
+            # resume-choice card's "r:{token}:generate" alongside its
+            # "a:{token}:skip"/"a:{token}:snooze"), and every one needs the
+            # same fresh token or a tap on the stale ones would silently do
+            # nothing (found while adding the resume-choice card).
             buttons = [
-                {**b, "callback_data": b["callback_data"].replace(f"a:{old_token}:", f"a:{new_token}:")}
+                {**b, "callback_data": b["callback_data"].replace(f":{old_token}:", f":{new_token}:")}
                 for b in payload.get("buttons") or []
             ]
             planned = self._plan_and_run_message(
@@ -165,6 +180,118 @@ class TelegramBotLoop:
             conn.commit()
             resent += 1
         return resent
+
+    # --- resume choice flow (Use my resume / Generate tailored) --------------
+    # Section 6.4 extension: the student explicitly picks how their resume
+    # gets handled for this drive, over a Telegram button, rather than the
+    # agent silently deciding. See planner._plan_resume_choice for how this
+    # card gets sent in the first place.
+
+    def _handle_resume_choice(self, approval: dict, action: str) -> None:
+        if approval["status"] != "PENDING":
+            return
+        drive = resolve.get_drive(self._db_path, approval["drive_id"])
+        if drive is None or action not in ("use", "generate"):
+            return
+
+        self._void_approval(approval["approval_id"])  # the resume question is answered
+        profile = self._adapters.sheets.read_profile()
+        resume_file, resume_reason = self._resolve_resume(drive, profile, mode=action)
+
+        drive.resolved_resume_pick = {
+            "resolved": True,
+            "file_id": resume_file.file_id if resume_file else None,
+            "name": resume_file.name if resume_file else None,
+            "web_view_link": resume_file.web_view_link if resume_file else None,
+            "reason": resume_reason,
+        }
+        resolve.save_drive(self._db_path, drive)
+
+        prefilled_form_url = self._resolve_prefilled_form_url(drive, profile, resume_file)
+        new_epoch = self._new_epoch_for_action(approval["action_id"])
+        planned = planner.plan_resolved_approval(
+            self._db_path, drive, profile, resume_file, new_epoch=new_epoch,
+            resume_reason=resume_reason, prefilled_form_url=prefilled_form_url,
+        )
+        executor.run_pending(self._db_path, self._adapters)
+        logger.info("resume choice %r resolved for drive %s (action %s)", action, drive.drive_id, planned.action_id)
+
+    def _resolve_resume(self, drive, profile, *, mode: str) -> tuple[ResumeFile | None, str | None]:
+        """Runs the static/generation resume logic in a FORCED mode (never
+        "auto" — the student already made the choice) directly from the bot
+        loop, since this happens well after run.process_message's own single
+        pass. Never raises: any failure here degrades to (None, None) rather
+        than leaving the student's tap unanswered."""
+        if self._adapters.files is None:
+            logger.warning("resume choice %r requested but no FileStore is wired to this bot loop", mode)
+            return None, None
+        if self._settings is None:
+            logger.warning("resume choice %r requested but TelegramBotLoop has no Settings", mode)
+            return None, None
+
+        from cutoff.pipeline.master_profile import load_master_profile
+
+        try:
+            master_profile = load_master_profile(self._settings.master_profile_path)
+            return resume_mod.select_resume_smart(
+                drive.role_category, drive.jd_text or "", self._adapters.files,
+                api_key=self._settings.llm_api_key, model=self._settings.llm_model,
+                provider=self._settings.llm_provider, base_url=self._settings.llm_base_url,
+                db_path=self._db_path, student_profile=profile, master_profile=master_profile,
+                generated_resume_dir=self._settings.generated_resume_dir,
+                public_base_url=self._settings.public_base_url, resume_mode=mode,
+            )
+        except Exception:
+            logger.exception("resume resolution failed for drive %s (mode %s)", drive.drive_id, mode)
+            return None, None
+
+    def _resolve_prefilled_form_url(self, drive, profile, resume_file: ResumeFile | None) -> str | None:
+        """Best-effort re-attempt at form autofill now that the resume is
+        finally known — mirrors run.py's own attempt, but never blocks: a
+        failure here just means the final card shows a plain (not
+        pre-filled) form link, same as when autofill isn't configured at all."""
+        if not drive.form_url or self._settings is None:
+            return None
+        try:
+            from cutoff.pipeline import form_autofill, ingest
+
+            resume_text = ""
+            if resume_file is not None and self._adapters.files is not None:
+                ok, data, err = executor.with_retry(lambda: self._adapters.files.get_resume_content(resume_file.file_id))
+                if ok:
+                    try:
+                        resume_text = ingest.extract_pdf_text(data)
+                    except Exception:
+                        resume_text = ""
+            autofilled = form_autofill.build_autofilled_url(
+                drive.form_url, profile, resume_text, drive.jd_text or "",
+                resume_link=(resume_file.web_view_link if resume_file else None),
+                api_key=self._settings.llm_api_key, model=self._settings.llm_model,
+                provider=self._settings.llm_provider, base_url=self._settings.llm_base_url,
+            )
+            if autofilled:
+                return autofilled
+        except Exception:
+            logger.exception("form autofill retry failed after resume choice for drive %s", drive.drive_id)
+
+        if self._adapters.sheets is not None:
+            try:
+                from cutoff.pipeline import form_prefill
+
+                template = self._adapters.sheets.read_form_template(drive.form_url)
+                return form_prefill.build_prefilled_url(template, profile)
+            except Exception:
+                return None
+        return None
+
+    def _new_epoch_for_action(self, action_id: str) -> bool:
+        """Recovers which idempotency key the resume-choice card was
+        originally planned under (":main" vs ":v{version}") so
+        plan_resolved_approval edits that SAME message rather than sending a
+        new one — see plan_resolved_approval's own docstring."""
+        conn = db.get_connection(self._db_path)
+        row = conn.execute("SELECT idempotency_key FROM actions WHERE action_id = ?", (action_id,)).fetchone()
+        return bool(row) and not row["idempotency_key"].endswith(":main")
 
     # --- question flow (Yes / No / Show email) -------------------------------
 

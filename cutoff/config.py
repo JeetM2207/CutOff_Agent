@@ -111,7 +111,7 @@ def get_settings() -> Settings:
         calendar_id=os.getenv("CALENDAR_ID", "primary"),
         exam_calendar_id=os.getenv("EXAM_CALENDAR_ID", ""),
         resume_folder_id=os.getenv("RESUME_FOLDER_ID", ""),
-        master_profile_path=os.getenv("MASTER_PROFILE_PATH", "config/master_profile.md"),
+        master_profile_path=os.getenv("MASTER_PROFILE_PATH", "config/master_profile.yaml"),
         generated_resume_dir=os.getenv("GENERATED_RESUME_DIR", "generated_resumes"),
         public_base_url=os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000"),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
