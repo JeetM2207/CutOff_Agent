@@ -35,13 +35,13 @@ SEND_SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 SENDER_TOKEN_FILE = "sender_token.json"
 
 
-def _jd_pdf_bytes() -> bytes:
+def _jd_pdf_bytes(company: str = "Google") -> bytes:
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
     _, height = A4
     y = height - 60
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y, "Google - Software Engineer (2026 Batch)")
+    c.drawString(50, y, f"{company} - Software Engineer (2026 Batch)")
     y -= 30
     c.setFont("Helvetica", 11)
     for line in [
@@ -198,15 +198,26 @@ def main() -> None:
     parser.add_argument("--preset", choices=sorted(PRESETS))
     parser.add_argument("--subject")
     parser.add_argument("--body")
+    parser.add_argument(
+        "--company",
+        help='Only for --preset new_drive_with_jd: swap "Google" for a different real, '
+             "globally-recognized company (e.g. Amazon, Microsoft) -- matters because prep intel "
+             "searches for real interview experiences by company name, and re-sending the exact "
+             "same content twice is a no-op (resolve.apply_notice sees nothing changed).",
+    )
     args = parser.parse_args()
 
     attachment = None
     if args.preset:
         preset = PRESETS[args.preset]
         subject, body = preset["subject"], preset["body"]
+        if args.company and args.preset == "new_drive_with_jd":
+            subject = subject.replace("Google", args.company)
+            body = body.replace("Google", args.company)
         if "attachment" in preset:
             filename, make_bytes = preset["attachment"]
-            attachment = (filename, make_bytes())
+            attachment = (filename, make_bytes(args.company) if args.company and make_bytes is _jd_pdf_bytes
+                          else make_bytes())
     elif args.subject and args.body:
         subject, body = args.subject, args.body
     else:
