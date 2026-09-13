@@ -394,7 +394,7 @@ Every real bug found along the way is logged with root cause and fix, never quie
 
 ## 🎬 Demo
 
-📺 **[Watch the 2-minute demo](ADD_DEMO_VIDEO_LINK_HERE)**
+📺 **[Watch the 2-minute demo](https://drive.google.com/file/d/1Z471IKQcqQ8N7Qk1jIderHBGYJ9UdXPr/view?usp=sharing)**
 
 <br>
 
